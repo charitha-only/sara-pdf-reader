@@ -39,3 +39,24 @@ inspection/recovery; nothing is published until both uploads complete.
 GitHub automatically provides source archives for the release tag. Every old
 release keeps its APK, checksum and update notes. The README's **All versions**
 link opens the full history; **Latest release** opens the newest release.
+
+## Smaller downloads
+
+Also build architecture-specific APKs for each release:
+
+```sh
+flutter build apk --release --split-per-abi --obfuscate --split-debug-info=work/release-symbols
+```
+
+The Android Gradle configuration sets `force-version-code-ignoring-abi=true`,
+so all variants use the same incrementing Android build number. This avoids an
+architecture-based version-code multiplier preventing later universal updates.
+Verify the produced APKs' package, version, certificate and native-library ABI.
+
+Publish ARM64 and ARMv7 APKs as additional assets of the same release, with
+version and ABI in each filename and a separate `.sha256` checksum for each.
+Keep the original universal download and checksum available. Explain the
+device choices and sizes at the top of the release notes and in the README.
+These variants retain the same features and offline resources; no Lite-mode
+feature removal is involved. The initial publishing tool handles the universal
+APK; additional ABI assets can be attached to the existing release afterward.

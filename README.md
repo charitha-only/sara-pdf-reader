@@ -9,7 +9,17 @@ iOS is not a supported release target yet.
 
 ## Download the APK
 
-- [Download Sara PDF Reader v1.01](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01.apk)
+| APK | Download size | Device |
+| --- | --- | --- |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01-arm64-v8a.apk) | 53.8 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01-armeabi-v7a.apk) | 47.7 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01.apk) | 122.6 MB | Use when unsure which architecture is supported |
+
+All three APKs have the same v1.01 reader features and offline resources. The
+universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
+the smaller APKs include the libraries for one architecture. Sizes use MiB,
+rounded to match GitHub's displayed MB sizes.
+
 - [Latest release and update notes](https://github.com/charitha-only/sara-pdf-reader/releases/latest)
 - [All versions and their separate downloads](https://github.com/charitha-only/sara-pdf-reader/releases)
 
