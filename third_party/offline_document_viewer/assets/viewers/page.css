@@ -1,0 +1,76 @@
+/* Akışkan belge kabuğu (docx, rtf, salt metin).
+   Sayfa yüzeyi beyaz kalıyor — sadakat kabuk temasından bağımsız. */
+
+:root { color-scheme: light; }
+
+/* PAGEFLOW PATCH: preserve legacy Word table geometry instead of reflowing. */
+.legacy-word { padding: 0; }
+.word-paper { display: flow-root; width: 794px; min-height: 1123px; background: white; transform-origin: top left; }
+.word-paper p { margin-top: 0; }
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f1f2f5;
+  color: #111;
+  font-family: 'Calibri', system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.stage {
+  padding: 16px 0 48px;
+}
+
+/* docx-preview sayfaları <section> olarak üretiyor; kâğıt hissi burada. */
+.stage .docx-wrapper {
+  background: transparent;
+  padding: 0;
+}
+
+.stage .docx-wrapper > section {
+  background: #fff;
+  margin: 0 auto 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 8px 24px rgba(0, 0, 0, .06);
+  border-radius: 2px;
+}
+
+/* Arama vurgusu — belge renklerini ezmeyen, dışarıdan gelen bir işaret. */
+mark.hit {
+  background: #ffd66b;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+mark.hit:first-of-type {
+  outline: 2px solid #e0910f;
+  outline-offset: 1px;
+}
+
+/* Documents converted on the Dart side reflow instead of paginating: there is
+   no page geometry to preserve, and forcing one would be a fiction. */
+.stage.reflow {
+  background: #fff;
+  margin: 0 auto;
+  max-width: 44rem;
+  padding: 24px 20px 64px;
+  line-height: 1.55;
+  font-size: 16px;
+}
+
+.stage.reflow p { margin: 0 0 0.85em; }
+.stage.reflow ul { margin: 0 0 0.85em 1.25em; padding: 0; }
+.stage.reflow li { margin: 0 0 0.35em; }
+.stage.reflow .tab { display: inline-block; width: 2em; }
+.stage.reflow hr.page-break {
+  border: 0;
+  border-top: 1px dashed #c9ccd2;
+  margin: 2em 0;
+}

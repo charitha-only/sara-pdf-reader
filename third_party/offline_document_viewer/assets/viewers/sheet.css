@@ -1,0 +1,108 @@
+/* xlsx kabuğu — hücre stilleri satır içi geliyor (motor üretiyor),
+   buradaki kurallar yalnızca iskelet ve kabuk. Hiçbir renk/kenarlık burada
+   tanımlanmıyor ki belgenin kendi stili görünsün. */
+
+:root {
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #111;
+  font-family: 'Calibri', system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Metin seçimi ve ekran okuyucu bilerek açık — WebView + gerçek DOM
+   yaklaşımının canvas'a karşı kazancı bu (bkz. 06_goruntuleyici_ui). */
+body {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.tabs {
+  display: flex;
+  gap: 1px;
+  overflow-x: auto;
+  background: #e7e9ee;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs button {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 13px;
+  padding: 10px 16px;
+  min-height: 44px;          /* dokunma hedefi alt sınırı */
+  border: 0;
+  background: #f3f4f7;
+  color: #4a5260;
+}
+
+.tabs button[aria-selected='true'] {
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 #2563c4;
+}
+
+.stage {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* The table is scaled to fit the viewport by xlsx.js; without this the
+   scaled element still reserves its unscaled width and leaves a wide,
+   empty scroll area to the right. */
+.stage table.sheet {
+  transform-origin: top left;
+}
+
+.stage table.sheet {
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+
+.stage table.sheet td {
+  padding: 3px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.stage table.sheet tr.freeze-row td {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-clip: padding-box;
+}
+
+.stage table.sheet td.freeze-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-clip: padding-box;
+}
+
+.stage table.sheet tr.freeze-row td.freeze-col { z-index: 3; }
+
+/* Arama vurgusu — kabuk rengi, belge stilini ezmiyor çünkü outline kullanıyor */
+.stage td.hit {
+  outline: 2px solid #e0910f;
+  outline-offset: -2px;
+}
+
+.stage .empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: #858c99;
+  font-size: 13px;
+}

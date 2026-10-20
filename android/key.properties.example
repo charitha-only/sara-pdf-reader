@@ -1,0 +1,6 @@
+# Copy to key.properties locally. Never commit real credentials.
+# storeFile is relative to android/app; use forward slashes on Windows.
+storeFile=../keys/your-release.p12
+storePassword=REPLACE_LOCALLY
+keyPassword=REPLACE_LOCALLY
+keyAlias=pageflow

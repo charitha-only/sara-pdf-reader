@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<!-- CSP kurulum sırasında platforma göre yazılıyor (WorkspaceBuilder._cspFor). -->
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>docx</title>
+<link rel="stylesheet" href="./fonts/office-fonts.css">
+<link rel="stylesheet" href="./page.css">
+<script src="./engine/jszip3.min.js"></script>
+<script src="./engine/docx-preview.js"></script>
+</head>
+<body>
+<div id="stage" class="stage" role="document"></div>
+
+<!-- Kabuk mantığı ayrı dosyada: satır içi script sıkı CSP altında bloklanıyor. -->
+<script src="./bridge.js"></script>
+<script src="./docx.js"></script>
+</body>
+</html>

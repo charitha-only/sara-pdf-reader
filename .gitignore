@@ -1,0 +1,33 @@
+# Local tooling and generated outputs
+.dart_tool/
+.flutter-plugins*
+.idea/
+.vscode/
+**/build/
+**/.gradle/
+**/.cxx/
+**/.dart_tool/
+**/.symlinks/
+coverage/
+work/
+*.iml
+*.log
+*.pyc
+__pycache__/
+.DS_Store
+android/local.properties
+**/GeneratedPluginRegistrant.java
+# Credentials and private data
+android/key.properties
+android/keys/
+*.p12
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+private_fixtures/
+*.apk
+*.aab
+app.*.symbols
+app.*.map.json

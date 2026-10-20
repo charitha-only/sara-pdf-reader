@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<!-- CSP kurulum sırasında platforma göre yazılıyor (WorkspaceBuilder._cspFor). -->
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>pptx</title>
+<link rel="stylesheet" href="./fonts/office-fonts.css">
+<link rel="stylesheet" href="./engine/pptxjs.css">
+<link rel="stylesheet" href="./engine/nv.d3.min.css">
+<link rel="stylesheet" href="./slides.css">
+
+<!-- PPTXjs'in pinlenmiş zinciri. jsZip burada v2 — docx/xlsx v3 istiyor,
+     bu yüzden her format kendi WebView'ında (ADR-002). -->
+<script src="./engine/jquery.min.js"></script>
+<script src="./engine/jszip2.min.js"></script>
+<script src="./engine/filereader.js"></script>
+<script src="./engine/d3.min.js"></script>
+<script src="./engine/nv.d3.min.js"></script>
+<!-- Wingdings → Unicode tablosu. Yüklenmezse madde imleri tofu kutusu olur;
+     upstream demosu bunu atlıyor. -->
+<script src="./engine/dingbat.js"></script>
+<script src="./engine/pptxjs.js"></script>
+<script src="./engine/divs2slides.js"></script>
+</head>
+<body>
+<div id="stage" class="stage" role="document"></div>
+
+<script src="./bridge.js"></script>
+<script src="./pptx.js"></script>
+</body>
+</html>

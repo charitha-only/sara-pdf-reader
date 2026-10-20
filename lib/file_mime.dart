@@ -1,0 +1,24 @@
+String fileMime(String path) => switch (path.split('.').last.toLowerCase()) {
+  'pdf' => 'application/pdf',
+  'doc' => 'application/msword',
+  'docx' =>
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'docm' => 'application/vnd.ms-word.document.macroEnabled.12',
+  'xls' => 'application/vnd.ms-excel',
+  'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'xlsm' => 'application/vnd.ms-excel.sheet.macroEnabled.12',
+  'ppt' => 'application/vnd.ms-powerpoint',
+  'pptx' =>
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'pptm' => 'application/vnd.ms-powerpoint.presentation.macroEnabled.12',
+  'rtf' => 'application/rtf',
+  'csv' => 'text/csv',
+  'tsv' => 'text/tab-separated-values',
+  'txt' || 'plain' => 'text/plain',
+  'png' => 'image/png',
+  'jpg' || 'jpeg' => 'image/jpeg',
+  'webp' => 'image/webp',
+  'gif' => 'image/gif',
+  'bmp' => 'image/bmp',
+  _ => 'application/octet-stream',
+};

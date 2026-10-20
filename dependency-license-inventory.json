@@ -1,0 +1,753 @@
+[
+  {
+    "package": "_fe_analyzer_shared",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "analyzer",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "android_file_picker",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "archive",
+    "licenses": [
+      "LICENSE",
+      "LICENSE-other.md"
+    ]
+  },
+  {
+    "package": "args",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "async",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "barcode",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "bidi",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "boolean_selector",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "built_collection",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "built_value",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "characters",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "clock",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "code_assets",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "code_builder",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "collection",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "convert",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "cross_file",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "crypto",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "cupertino_icons",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "cupertino_ui",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "dart_style",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "dbus",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "fake_async",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "ffi",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "ffi_leak_tracker",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "file",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "file_picker",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "file_picker_darwin",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "file_picker_linux",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "file_picker_platform_interface",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "file_picker_web",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "fixnum",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_driver",
+    "licenses": []
+  },
+  {
+    "package": "flutter_inappwebview",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_inappwebview_android",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_inappwebview_internal_annotations",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_inappwebview_ios",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_inappwebview_macos",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_inappwebview_platform_interface",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_inappwebview_web",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_inappwebview_windows",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_lints",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_localizations",
+    "licenses": []
+  },
+  {
+    "package": "flutter_pdf_annotations",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "flutter_test",
+    "licenses": []
+  },
+  {
+    "package": "flutter_web_plugins",
+    "licenses": []
+  },
+  {
+    "package": "fuchsia_remote_debug_protocol",
+    "licenses": []
+  },
+  {
+    "package": "glob",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "harfbuzz_ffi",
+    "licenses": [
+      "COPYING.harfbuzz",
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "hooks",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "http",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "http_parser",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "image",
+    "licenses": [
+      "LICENSE",
+      "LICENSE-other.md"
+    ]
+  },
+  {
+    "package": "integration_test",
+    "licenses": []
+  },
+  {
+    "package": "intl",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "jni",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "jni_flutter",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "leak_tracker",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "leak_tracker_flutter_testing",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "leak_tracker_testing",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "lints",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "logging",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "matcher",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "material_color_utilities",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "material_ui",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "meta",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "native_toolchain_c",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "objective_c",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "offline_document_viewer",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "open_xml",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "package_config",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path_parsing",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path_provider",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path_provider_android",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path_provider_foundation",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path_provider_linux",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path_provider_platform_interface",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "path_provider_windows",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pdf",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pdf_text_shaper",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pdfium_dart",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pdfium_flutter",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pdfrx",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pdfrx_engine",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "petitparser",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "platform",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "plugin_platform_interface",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "posix",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "process",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pub_semver",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "qr",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "recase",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "record_use",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "rxdart",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "sky_engine",
+    "licenses": [
+      "license"
+    ]
+  },
+  {
+    "package": "source_span",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "stack_trace",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "stream_channel",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "string_scanner",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "sync_http",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "synchronized",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "term_glyph",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "tesseract_ocr",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "test_api",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "typed_data",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher_android",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher_ios",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher_linux",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher_macos",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher_platform_interface",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher_web",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "url_launcher_windows",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "vector_math",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "vm_service",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "watcher",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "web",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "webdriver",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "win32",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "windows_file_picker",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "xdg_directories",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "xml",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "yaml",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "pageflow_reader",
+    "licenses": []
+  }
+]

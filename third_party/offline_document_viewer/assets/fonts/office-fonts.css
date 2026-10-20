@@ -1,0 +1,369 @@
+/* Metrik-uyumlu font ikameleri ve sembol geri dusme zinciri.
+ *
+ * SORUN 1 — metin akisi. Office belgeleri Calibri / Cambria / Arial gibi
+ * fontlari isteyip kutu genisliklerini o fontlarin metriklerine gore
+ * hesapliyor. Font yoksa tarayici daha genis bir fallback'e dusuyor, metin
+ * kutuya sigmiyor, PPTXjs'in sabit konumlu duzeni kayiyor ve word-wrap
+ * kelimeleri ortadan kesiyor. Cozum: aileyi orijinal adiyla tanimlayip
+ * karakter genislikleri birebir ayni olan acik kaynak muadili baglamak.
+ *
+ *   Calibri         -> Carlito          (SIL OFL 1.1)
+ *   Cambria         -> Caladea          (SIL OFL 1.1)
+ *   Arial/Helvetica -> Liberation Sans  (SIL OFL 1.1)
+ *   Times New Roman -> Liberation Serif (SIL OFL 1.1)
+ *   Courier New     -> Liberation Mono  (SIL OFL 1.1)
+ *
+ * SORUN 2 — madde imi sembolleri. PPTXjs madde imi span'ine font-family
+ * olarak Wingdings yaziyor ama icerigi dingbat.js ile Unicode'a ceviriyor.
+ * Ortaya cikan kod noktalarinin cogu (ornegin U+2981) hicbir sistem fontunda
+ * yok; Android'de kesinlikle tofu. Cozum: bu aileleri sembol fontlarina
+ * baglamak. Uc font birlikte dingbat.js'in 862 hedefinin 849'unu (%98)
+ * kapsiyor, toplam 2.3 MB:
+ *
+ *   DejaVu Sans          - dingbat ve geometrik sekiller  (Bitstream Vera + public domain)
+ *   Noto Sans Math       - matematik bloklari             (SIL OFL 1.1)
+ *   Noto Sans Symbols 2  - sembol ve piktograf bloklari   (SIL OFL 1.1)
+ *
+ * Kapsanmayan 13 kod noktasi: U+238B U+24C5 U+24EA U+24FF U+26F3 U+26F7
+ * U+2E3F U+1F10B U+1F10C U+1F546-U+1F549. Hepsi nadir piktograflar; madde
+ * imi olarak pratikte gorulmuyorlar.
+ *
+ * NOT: Sirasi onemli. Ayni aile icinde once tam kapsamli DejaVu, sonra
+ * unicode-range ile sinirli Noto'lar geliyor; CSS'te sonra gelen kazandigi
+ * icin ozel bloklar dogru fonta dusuyor.
+ */
+
+/* --- metin fontlari ------------------------------------------------ */
+
+@font-face {
+  font-family: "Calibri";
+  src: url("./Carlito-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Calibri";
+  src: url("./Carlito-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Calibri";
+  src: url("./Carlito-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: "Calibri";
+  src: url("./Carlito-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Cambria";
+  src: url("./Caladea-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Cambria";
+  src: url("./Caladea-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Cambria";
+  src: url("./Caladea-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: "Cambria";
+  src: url("./Caladea-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Arial";
+  src: url("./LiberationSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Arial";
+  src: url("./LiberationSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Arial";
+  src: url("./LiberationSans-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: "Arial";
+  src: url("./LiberationSans-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Helvetica";
+  src: url("./LiberationSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Helvetica";
+  src: url("./LiberationSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Helvetica";
+  src: url("./LiberationSans-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: "Helvetica";
+  src: url("./LiberationSans-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Times New Roman";
+  src: url("./LiberationSerif-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Times New Roman";
+  src: url("./LiberationSerif-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Times New Roman";
+  src: url("./LiberationSerif-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: "Times New Roman";
+  src: url("./LiberationSerif-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Courier New";
+  src: url("./LiberationMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Courier New";
+  src: url("./LiberationMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Lucida Console";
+  src: url("./LiberationMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Lucida Console";
+  src: url("./LiberationMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+/* --- sembol geri dusme zinciri -------------------------------------- */
+
+@font-face {
+  font-family: "Wingdings";
+  src: url("./DejaVuSans.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Wingdings";
+  src: url("./DejaVuSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Wingdings";
+  src: url("./NotoSansMath-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27FF, U+2900-297F, U+2980-29FF, U+2A00-2AFF;
+}
+@font-face {
+  font-family: "Wingdings";
+  src: url("./NotoSansSymbols2-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2500-25FF, U+2600-26FF, U+2700-27BF, U+2B00-2BFF, U+1F000-1F0FF, U+1F300-1F5FF, U+1F600-1F64F, U+1F650-1F67F, U+1F680-1F6FF, U+1F780-1F8FF;
+}
+
+@font-face {
+  font-family: "Wingdings 2";
+  src: url("./DejaVuSans.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Wingdings 2";
+  src: url("./DejaVuSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Wingdings 2";
+  src: url("./NotoSansMath-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27FF, U+2900-297F, U+2980-29FF, U+2A00-2AFF;
+}
+@font-face {
+  font-family: "Wingdings 2";
+  src: url("./NotoSansSymbols2-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2500-25FF, U+2600-26FF, U+2700-27BF, U+2B00-2BFF, U+1F000-1F0FF, U+1F300-1F5FF, U+1F600-1F64F, U+1F650-1F67F, U+1F680-1F6FF, U+1F780-1F8FF;
+}
+
+@font-face {
+  font-family: "Wingdings 3";
+  src: url("./DejaVuSans.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Wingdings 3";
+  src: url("./DejaVuSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Wingdings 3";
+  src: url("./NotoSansMath-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27FF, U+2900-297F, U+2980-29FF, U+2A00-2AFF;
+}
+@font-face {
+  font-family: "Wingdings 3";
+  src: url("./NotoSansSymbols2-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2500-25FF, U+2600-26FF, U+2700-27BF, U+2B00-2BFF, U+1F000-1F0FF, U+1F300-1F5FF, U+1F600-1F64F, U+1F650-1F67F, U+1F680-1F6FF, U+1F780-1F8FF;
+}
+
+@font-face {
+  font-family: "Webdings";
+  src: url("./DejaVuSans.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Webdings";
+  src: url("./DejaVuSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Webdings";
+  src: url("./NotoSansMath-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27FF, U+2900-297F, U+2980-29FF, U+2A00-2AFF;
+}
+@font-face {
+  font-family: "Webdings";
+  src: url("./NotoSansSymbols2-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2500-25FF, U+2600-26FF, U+2700-27BF, U+2B00-2BFF, U+1F000-1F0FF, U+1F300-1F5FF, U+1F600-1F64F, U+1F650-1F67F, U+1F680-1F6FF, U+1F780-1F8FF;
+}
+
+@font-face {
+  font-family: "Symbol";
+  src: url("./DejaVuSans.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Symbol";
+  src: url("./DejaVuSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Symbol";
+  src: url("./NotoSansMath-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27FF, U+2900-297F, U+2980-29FF, U+2A00-2AFF;
+}
+@font-face {
+  font-family: "Symbol";
+  src: url("./NotoSansSymbols2-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2500-25FF, U+2600-26FF, U+2700-27BF, U+2B00-2BFF, U+1F000-1F0FF, U+1F300-1F5FF, U+1F600-1F64F, U+1F650-1F67F, U+1F680-1F6FF, U+1F780-1F8FF;
+}
+

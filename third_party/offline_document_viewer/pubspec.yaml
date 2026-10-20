@@ -1,0 +1,44 @@
+name: offline_document_viewer
+description: >-
+  View PDF, Word, Excel and PowerPoint documents fully offline. Renders on the
+  device with bundled open-source engines — no network, no server, no cloud.
+version: 0.1.0
+repository: https://github.com/huseyiniriss/offline_document_viewer
+issue_tracker: https://github.com/huseyiniriss/offline_document_viewer/issues
+
+topics:
+  - document
+  - pdf
+  - office
+  - viewer
+  - offline
+
+environment:
+  # Set by pdfrx, the highest floor among the dependencies. Declaring anything
+  # lower would promise support that cannot resolve.
+  sdk: ^3.10.0
+  flutter: ">=3.41.0"
+
+dependencies:
+  crypto: ^3.0.7
+  flutter:
+    sdk: flutter
+  # Hosts the bundled JavaScript rendering engines for Office formats.
+  flutter_inappwebview: ^6.1.5
+  path_provider: ^2.1.6
+  # PDF is rendered natively by PDFium — it never touches the WebView bridge.
+  pdfrx: ^2.4.7
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  assets:
+    - assets/viewers/
+    - assets/engines/docx/
+    - assets/engines/pptx/
+    - assets/engines/xlsx/
+    - assets/fonts/
+    - assets/licenses/

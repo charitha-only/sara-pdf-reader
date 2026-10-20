@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<!-- CSP kurulum sırasında platforma göre yazılıyor: Android gerçek bir https
+     origin'i olduğu için sıkı 'self' politikasını kullanabiliyor, iOS'ta
+     file:// origin'i opak olduğundan 'self' hiçbir şeyle eşleşmiyor ve tüm
+     scriptler bloklanıyor. Bkz. WorkspaceBuilder._cspFor. -->
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>xlsx</title>
+<link rel="stylesheet" href="./fonts/office-fonts.css">
+<link rel="stylesheet" href="./sheet.css">
+<script src="./engine/jszip3.min.js"></script>
+<script src="./engine/xlsx.full.min.js"></script>
+<script src="./engine/xlsx-render.js"></script>
+</head>
+<body>
+<div id="tabs" class="tabs" role="tablist"></div>
+<div id="stage" class="stage" role="document"></div>
+
+<script src="./bridge.js"></script>
+<script src="./xlsx.js"></script>
+
+</body>
+</html>

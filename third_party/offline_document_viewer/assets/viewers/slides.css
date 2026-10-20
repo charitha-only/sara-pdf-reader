@@ -1,0 +1,44 @@
+/* Sunum kabuğu. PPTXjs slaytları mutlak konumlu div'ler olarak üretiyor;
+   burada yalnızca sayfa ritmi ve arama vurgusu var. */
+
+:root { color-scheme: light; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f1f2f5;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.stage {
+  padding: 16px 0 48px;
+}
+
+/* Slaytları ekrana sığdır: PPTXjs sabit piksel genişlik veriyor, telefonda
+   taşıyor. Ölçek dönüşümü düzeni bozmadan küçültüyor. */
+.stage .slide {
+  /* !important YOK: fitToWidth ölçek sonrası kenar boşluğunu inline
+     düzeltiyor ve !important onu eziyordu. */
+  margin: 0 auto 16px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 8px 24px rgba(0, 0, 0, .06);
+  border-radius: 2px;
+  /* max-width YOK: ölçekleme JS tarafında yapılıyor ve slaytın DOĞAL
+     genişliğini ölçmesi gerekiyor. CSS ile kırpmak ölçümü bozuyor, içerik
+     de mutlak konumlu olduğu için yine taşıyordu. */
+}
+
+/* Ölçeklenen slaytlar yatay taşma yaratmasın. */
+.stage { overflow-x: hidden; }
+
+.stage .slide.hit {
+  outline: 3px solid #e0910f;
+  outline-offset: 2px;
+}
+
+.slides-loadnig-msg { display: none !important; }

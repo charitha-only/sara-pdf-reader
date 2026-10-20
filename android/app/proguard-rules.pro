@@ -1,0 +1,64 @@
+# Native Tesseract/PDFium entry points retain their JNI names.
+-keep class com.googlecode.tesseract.android.** { *; }
+-keepclasseswithmembernames,includedescriptorclasses class * { native <methods>; }
+-keep class com.shockwave.pdfium.** { *; }
+# Xerces discovers parser configurations and DOM implementations by class name.
+-keep class org.apache.xerces.** { *; }
+-keep class org.w3c.dom.** { *; }
+# Optional XML catalog and StAX notation support, unused by empty DOM creation.
+-dontwarn javax.xml.stream.events.NotationDeclaration
+-dontwarn org.apache.xml.resolver.Catalog
+-dontwarn org.apache.xml.resolver.CatalogManager
+-dontwarn org.apache.xml.resolver.readers.CatalogReader
+-dontwarn org.apache.xml.resolver.readers.SAXCatalogReader
+
+# Optional desktop drawing, StAX schema, OSGi and compile-time annotation APIs.
+# The Android reader uses HWPF data and Xerces DOM, not these backends.
+-dontwarn aQute.bnd.annotation.baseline.BaselineIgnore
+-dontwarn aQute.bnd.annotation.spi.ServiceConsumer
+-dontwarn aQute.bnd.annotation.spi.ServiceProvider
+-dontwarn edu.umd.cs.findbugs.annotations.Nullable
+-dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+-dontwarn java.awt.Color
+-dontwarn java.awt.Dimension
+-dontwarn java.awt.Rectangle
+-dontwarn java.awt.color.ColorSpace
+-dontwarn java.awt.geom.AffineTransform
+-dontwarn java.awt.geom.Dimension2D
+-dontwarn java.awt.geom.Path2D
+-dontwarn java.awt.geom.PathIterator
+-dontwarn java.awt.geom.Point2D
+-dontwarn java.awt.geom.Rectangle2D
+-dontwarn java.awt.image.BufferedImage
+-dontwarn java.awt.image.ColorModel
+-dontwarn java.awt.image.ComponentColorModel
+-dontwarn java.awt.image.DirectColorModel
+-dontwarn java.awt.image.IndexColorModel
+-dontwarn java.awt.image.PackedColorModel
+-dontwarn javax.xml.stream.Location
+-dontwarn javax.xml.stream.XMLEventFactory
+-dontwarn javax.xml.stream.XMLEventReader
+-dontwarn javax.xml.stream.XMLEventWriter
+-dontwarn javax.xml.stream.XMLStreamException
+-dontwarn javax.xml.stream.XMLStreamReader
+-dontwarn javax.xml.stream.XMLStreamWriter
+-dontwarn javax.xml.stream.events.Attribute
+-dontwarn javax.xml.stream.events.Characters
+-dontwarn javax.xml.stream.events.Comment
+-dontwarn javax.xml.stream.events.DTD
+-dontwarn javax.xml.stream.events.EndDocument
+-dontwarn javax.xml.stream.events.EndElement
+-dontwarn javax.xml.stream.events.EntityDeclaration
+-dontwarn javax.xml.stream.events.EntityReference
+-dontwarn javax.xml.stream.events.Namespace
+-dontwarn javax.xml.stream.events.ProcessingInstruction
+-dontwarn javax.xml.stream.events.StartDocument
+-dontwarn javax.xml.stream.events.StartElement
+-dontwarn javax.xml.stream.events.XMLEvent
+-dontwarn javax.xml.transform.stax.StAXResult
+-dontwarn javax.xml.transform.stax.StAXSource
+-dontwarn org.osgi.framework.Bundle
+-dontwarn org.osgi.framework.BundleContext
+-dontwarn org.osgi.framework.FrameworkUtil
+-dontwarn org.osgi.framework.ServiceReference
+-dontwarn org.osgi.framework.wiring.BundleRevision
