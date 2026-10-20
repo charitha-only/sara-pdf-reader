@@ -1,11 +1,26 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **0.4.0+5**.
+Free, open-source Android document reader built with Flutter. Version **v1.01** (Android build 6).
 Read PDFs, preview Office documents, read UTF-8 text and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
 interfaces are disabled by default; their experimental source remains for future work.
 iOS is not a supported release target yet.
+
+## Download the APK
+
+- [Download Sara PDF Reader v1.01](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01.apk)
+- [Latest release and update notes](https://github.com/charitha-only/sara-pdf-reader/releases/latest)
+- [All versions and their separate downloads](https://github.com/charitha-only/sara-pdf-reader/releases)
+
+Each release has its own version tag, update notes, signed APK and SHA-256
+checksum. Older releases remain available when a new version is published.
+Install the APK on Android 8 or later. To update an existing installation,
+download and install the newer APK from the same publisher; the signing key
+must match. The current release label and Android version name are **v1.01**;
+Flutter's internal semantic version is `1.0.1+6`.
+
+See [RELEASING.md](RELEASING.md) for publishing the next version.
 
 ## Reading support
 
@@ -92,7 +107,7 @@ With an Android device/emulator connected, run the generated-data reader smoke s
 flutter test integration_test/reader_launch_test.dart -d DEVICE_ID
 ```
 
-The distributed 0.4.0 APK was previously checked offline against four private
+The reader baseline was previously checked offline against four private
 Word/Excel examples and with a receiving app for sharing. Those documents,
 base64 fixture data, screenshots, helper apps and private verification logs are
 not distributed in this repository. The public Android smoke suite covers
