@@ -1,7 +1,8 @@
-# Pageflow Reader
+# Sara PDF Reader
 
 Free, open-source Android document reader built with Flutter. Version **0.4.0+5**.
 Read PDFs, preview Office documents, read UTF-8 text and view images locally.
+The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
 interfaces are disabled by default; their experimental source remains for future work.
 iOS is not a supported release target yet.
@@ -100,7 +101,7 @@ Do not treat those checks as exhaustive coverage of all document formats.
 
 ## License and contributions
 
-Original Pageflow code is MIT licensed; see [LICENSE](LICENSE). Dependencies,
+Original Sara PDF Reader code is MIT licensed; see [LICENSE](LICENSE). Dependencies,
 fonts, bundled engines, model data and vendored code retain their own licenses.
 Full notices are in [THIRD_PARTY_NOTICES.txt](assets/licenses/THIRD_PARTY_NOTICES.txt)
 and the relevant dependency directories. See [CONTRIBUTING.md](CONTRIBUTING.md).

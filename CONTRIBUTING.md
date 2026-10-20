@@ -12,5 +12,5 @@ Use generated or openly licensed test documents. Never commit real invoices,
 customer documents, signing keys, passwords or base64 copies of private files.
 Keep upstream copyright/license notices and document vendored modifications.
 
-Contributions to original Pageflow code are provided under the repository's MIT
+Contributions to original Sara PDF Reader code are provided under the repository's MIT
 license. Upstream dependencies remain governed by their own licenses.

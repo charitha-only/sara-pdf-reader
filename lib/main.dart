@@ -218,7 +218,7 @@ void main() {
       'assets/licenses/THIRD_PARTY_NOTICES.txt',
     );
     yield LicenseEntryWithLineBreaks([
-      'Pageflow bundled native libraries, fonts and OCR model',
+      'Sara PDF Reader bundled native libraries, fonts and OCR model',
     ], text);
   });
   runApp(const PageflowApp());
@@ -282,7 +282,7 @@ class _PageflowAppState extends State<PageflowApp> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'Pageflow PDF Reader',
+    title: 'Sara PDF Reader',
     locale: Locale(AppLanguage.instance.value),
     supportedLocales: const [Locale('en'), Locale('si')],
     localizationsDelegates: const [
@@ -377,7 +377,7 @@ class WelcomePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     const LocalizedText(
-                      'PDF & Document\nReader',
+                      'Sara PDF Reader',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: ink,
@@ -1534,7 +1534,7 @@ class _HomePageState extends State<HomePage> {
       );
       if (!mounted) return;
       final saved = await FilePicker.saveFile(
-        fileName: 'Pageflow-library.pageflowbackup',
+        fileName: 'Sara-library.pageflowbackup',
         bytes: bytes,
         mimeType: 'application/zip',
         dialogTitle: 'Save library backup',
@@ -2235,7 +2235,7 @@ class _SettingsPage extends StatelessWidget {
           title: const LocalizedText('Open-source licenses'),
           onTap: () => showLicensePage(
             context: context,
-            applicationName: 'Pageflow',
+            applicationName: 'Sara PDF Reader',
             applicationVersion: '0.4.0',
           ),
         ),
@@ -2310,7 +2310,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Pageflow Reader · 0.4.0',
+            'Sara PDF Reader · 0.4.0',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
