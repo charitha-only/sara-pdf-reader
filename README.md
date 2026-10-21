@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.01** (Android build 6).
+Free, open-source Android document reader built with Flutter. Version **v1.02** (Android build 7).
 Read PDFs, preview Office documents, read UTF-8 text and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01-arm64-v8a.apk) | 53.8 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01-armeabi-v7a.apk) | 47.7 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.01/Sara-PDF-Reader-v1.01.apk) | 122.6 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-v1.02-arm64-v8a.apk) | 53.9 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-v1.02-armeabi-v7a.apk) | 47.9 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-v1.02.apk) | 122.9 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.01 reader features and offline resources. The
+All three APKs have the same v1.02 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,10 +27,16 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.01**;
-Flutter's internal semantic version is `1.0.1+6`.
+must match. The current release label and Android version name are **v1.02**;
+Flutter's internal semantic version is `1.0.2+7`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
+
+## v1.02 improvements
+
+Open documents from other Android apps, search Sinhala/English with match navigation, resume Office/text reading positions, browse a persistent library filter, and cancel or retry imports/previews. Office supports fit-width and original-size viewing; workbook search spans sheets. Settings links to the latest release and all version downloads. See [update notes](release-notes/v1.02.md).
+
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-logo.png).
 
 ## Reading support
 

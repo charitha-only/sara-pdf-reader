@@ -7,6 +7,8 @@
   'use strict';
 
   const stage = document.getElementById('stage');
+  let viewMode = 'width';
+  Bridge.on('viewMode', function(payload) { viewMode = payload.mode; fitToWidth(); });
 
   /* Word sayfası sabit genişlikte (A4 ≈ 794 px); telefon ekranı ~390 px.
      Ölçekleyerek sığdırıyoruz — yatay kaydırma bir belge okuyucuda kabul
@@ -26,7 +28,7 @@
       return;
     }
     const available = document.documentElement.clientWidth;
-    const scale = Math.min(1, available / pageWidth);
+    const scale = viewMode === 'actual' ? 1 : Math.min(1, available / pageWidth);
     wrapper.style.width = pageWidth + 'px';
     const naturalHeight = wrapper.scrollHeight;
     wrapper.style.position = 'absolute';
@@ -74,6 +76,7 @@
     });
 
     await document.fonts.ready;
+    await Promise.all(Array.from(stage.querySelectorAll('img')).map(img => img.decode ? img.decode().catch(() => {}) : Promise.resolve()));
     stage.querySelectorAll('[data-word-vml-box]').forEach(function(box) {
       const paragraph = box.closest('p');
       if (paragraph) paragraph.style.marginLeft = '0';
@@ -107,7 +110,7 @@
   });
 
   Bridge.on('search', function (payload) {
-    const query = (payload.query || '').toLocaleLowerCase('tr');
+    const query = (payload.query || '').toLowerCase();
 
     // Önceki vurguları temizle.
     stage.querySelectorAll('mark.hit').forEach(function (mark) {
@@ -126,14 +129,14 @@
     const targets = [];
     while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (node.nodeValue.toLocaleLowerCase('tr').indexOf(query) >= 0) {
+      if (node.nodeValue.toLowerCase().indexOf(query) >= 0) {
         targets.push(node);
       }
     }
 
     targets.forEach(function (node) {
       const value = node.nodeValue;
-      const lower = value.toLocaleLowerCase('tr');
+      const lower = value.toLowerCase();
       const fragment = document.createDocumentFragment();
       let cursor = 0;
       let found = lower.indexOf(query, cursor);

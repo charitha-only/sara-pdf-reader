@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pdfrx/pdfrx.dart';
 
@@ -102,7 +103,7 @@ class _DocumentViewState extends State<DocumentView> {
   @override
   void initState() {
     super.initState();
-    _controller.attach(onSearch: _search, onGoto: _goTo);
+    _controller.attach(onSearch: _search, onGoto: _goTo, onCommand: _command);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_prepare());
     });
@@ -158,10 +159,8 @@ class _DocumentViewState extends State<DocumentView> {
     }
 
     // Untrusted input is vetted before any engine sees it.
-    final Object report = DocumentPreflight.inspect(
-      bytes: bytes,
-      fileName: widget.source.name,
-    );
+    final Object report = await compute(_inspectDocument, (bytes, widget.source.name));
+    if (!mounted) return;
     if (report is DocumentFailure) {
       return _fail(report);
     }
@@ -252,6 +251,10 @@ class _DocumentViewState extends State<DocumentView> {
       case 'located':
         _controller.reportPosition((message.payload['index'] as int?) ?? 0);
 
+      case 'viewport':
+        _controller.reportViewport((message.payload['fraction'] as num?)?.toDouble() ?? 0, (message.payload['horizontal'] as num?)?.toDouble() ?? 0);
+      case 'searchIndex':
+        _controller.reportSearchIndex((message.payload['index'] as int?) ?? -1);
       case 'searchResult':
         _controller.reportSearchHits((message.payload['hits'] as int?) ?? 0);
 
@@ -263,6 +266,11 @@ class _DocumentViewState extends State<DocumentView> {
           ),
         );
     }
+  }
+
+  Future<void> _command(String type, Map<String, Object?> payload) async {
+    final controller = _webView;
+    if (controller != null) await ViewerBridge.send(controller, BridgeMessage(type, payload));
   }
 
   Future<void> _search(String query) async {
@@ -364,3 +372,5 @@ class _DocumentViewState extends State<DocumentView> {
     );
   }
 }
+
+Object _inspectDocument((Uint8List, String) request) => DocumentPreflight.inspect(bytes: request.$1, fileName: request.$2);

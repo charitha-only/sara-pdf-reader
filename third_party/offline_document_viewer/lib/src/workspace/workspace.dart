@@ -57,7 +57,7 @@ class WorkspaceBuilder {
   /// keeps seeing documents produced by the previous version, which is silent
   /// and very hard to diagnose: the code is fixed, the tests pass, and the
   /// screen still shows the old output.
-  static const int _layoutRevision = 18;
+  static const int _layoutRevision = 19;
 
   /// SheetJS reads `.xls` and `.csv` as well as `.xlsx`, so all three share
   /// one bundle. The style layer simply finds nothing to read in the legacy
@@ -162,7 +162,13 @@ class WorkspaceBuilder {
       _bundles.containsKey(format) || _dartRendered.contains(format);
 
   /// Prepares (or reuses) the workspace for [bytes].
-  Future<Workspace> build({
+  static final Map<String, Future<Workspace>> _pending = {};
+  Future<Workspace> build({required Uint8List bytes, required DocumentFormat format}) {
+    final key = '${format.name}:${sha256.convert(bytes)}';
+    return _pending.putIfAbsent(key, () => _build(bytes: bytes, format: format).whenComplete(() { _pending.remove(key); }));
+  }
+
+  Future<Workspace> _build({
     required Uint8List bytes,
     required DocumentFormat format,
   }) async {

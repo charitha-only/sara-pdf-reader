@@ -21,3 +21,11 @@ Additional layout fixes:
 - Fit and refit Word pages without changing their authored width or accumulating
   scaling on rotation; remove unscaled layout space from the scroll extent.
 - Defer controller status notifications until the first frame has finished.
+
+Sara v1.02 reader changes:
+- Cache preparation shares in-flight work without a self-referential future.
+- Stable document sources preserve WebView state across reader toolbar updates.
+- Fonts/images settle before page measurement; fit/original-size modes and viewport restoration.
+- Workbook-wide search, active result navigation and cell highlights after sheet changes.
+- Viewport/search index bridge events for reading-position persistence and next/previous controls.
+- Archive preflight runs in an isolate; cancellation unmounts the preview and retry starts a fresh renderer.

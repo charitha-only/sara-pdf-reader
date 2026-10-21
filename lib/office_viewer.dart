@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:offline_document_viewer/offline_document_viewer.dart';
 
 import 'app_language.dart';
 import 'file_mime.dart';
+import 'reading_state.dart';
 
 class OfficeViewer extends StatefulWidget {
   const OfficeViewer({super.key, required this.path, required this.name});
@@ -14,7 +17,60 @@ class OfficeViewer extends StatefulWidget {
 
 class _OfficeViewerState extends State<OfficeViewer> {
   final controller = DocumentViewController();
+  late Future<Map<String, dynamic>> savedState;
+  late final DocumentSource source;
+  Timer? saveTimer;
   int generation = 0;
+  bool cancelled = false, restored = false;
+  String mode = 'width', query = '';
+  @override
+  void initState() {
+    super.initState();
+    source = DocumentSource.file(widget.path);
+    savedState = ReadingStateStore.load(widget.path);
+    controller.addListener(positionChanged);
+  }
+
+  Map<String, dynamic> snapshot() => {
+    'unit': controller.position,
+    'scroll': controller.scrollFraction,
+    'horizontal': controller.horizontalOffset,
+    'mode': mode,
+  };
+  void save() {
+    if (restored) {
+      unawaited(
+        ReadingStateStore.save(
+          widget.path,
+          snapshot(),
+        ).catchError((Object _) {}),
+      );
+    }
+  }
+
+  void positionChanged() {
+    if (!restored || controller.status != DocumentViewStatus.ready) return;
+    saveTimer?.cancel();
+    saveTimer = Timer(const Duration(milliseconds: 400), save);
+  }
+
+  Future<void> restore(DocumentInfo info) async {
+    final saved = await savedState;
+    if (!mounted || restored) return;
+    mode = saved['mode'] == 'actual' ? 'actual' : 'width';
+    await controller.setViewMode(mode);
+    final unit = ((saved['unit'] as num?)?.toInt() ?? 0).clamp(
+      0,
+      info.unitCount > 0 ? info.unitCount - 1 : 0,
+    );
+    if (unit > 0) await controller.goTo(unit);
+    await controller.restoreScroll(
+      (saved['scroll'] as num?)?.toDouble() ?? 0,
+      (saved['horizontal'] as num?)?.toDouble() ?? 0,
+    );
+    if (mounted) setState(() => restored = true);
+  }
+
   Future<void> share() async {
     try {
       await const MethodChannel('pageflow_reader/share')
@@ -24,43 +80,69 @@ class _OfficeViewerState extends State<OfficeViewer> {
             'mimeType': fileMime(widget.path),
           });
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not share this file: $error')),
-        );
-      }
+      message('Could not share this file: $error');
+    }
+  }
+
+  void message(String value) {
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(value)));
     }
   }
 
   Future<void> search() async {
-    final input = TextEditingController();
-    final query = await showDialog<String>(
+    final input = TextEditingController(text: query);
+    final value = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const LocalizedText('Find in document'),
         content: TextField(
           controller: input,
           autofocus: true,
-          onSubmitted: (value) => Navigator.pop(context, value),
+          textInputAction: TextInputAction.search,
+          decoration: const InputDecoration(
+            hintText: 'Sinhala or English text',
+          ),
+          onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, ''),
+            onPressed: () => Navigator.pop(dialogContext, ''),
             child: const LocalizedText('Clear'),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, input.text),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, input.text.trim()),
             child: const LocalizedText('Find'),
           ),
         ],
       ),
     );
-    input.dispose();
-    if (query != null) await controller.search(query);
+    Future<void>.delayed(const Duration(milliseconds: 300), input.dispose);
+    if (!mounted || value == null) return;
+    setState(() => query = value);
+    try {
+      await controller.search(value);
+    } catch (error) {
+      message('Could not search: $error');
+    }
+  }
+
+  void retry() {
+    save();
+    savedState = ReadingStateStore.load(widget.path);
+    setState(() {
+      cancelled = false;
+      restored = false;
+      generation++;
+    });
   }
 
   @override
   void dispose() {
+    saveTimer?.cancel();
+    save();
+    controller.removeListener(positionChanged);
     controller.dispose();
     super.dispose();
   }
@@ -68,19 +150,53 @@ class _OfficeViewerState extends State<OfficeViewer> {
   String failureText(DocumentFailure failure) => switch (failure) {
     EncryptedDocumentFailure() =>
       'This Office file is password protected. Open an unlocked copy.',
-    TooLargeFailure() => 'This Office file exceeds the 80 MB preview limit.',
+    TooLargeFailure() => 'This document exceeds the supported preview size.',
     UnsupportedFormatFailure() => 'This file format is not supported.',
+    RendererFailure(timedOut: true) =>
+      'Preview took too long. Retry, or try a smaller document.',
     _ => 'Could not preview this document. It may be damaged or use unsupported content.',
   };
+  Widget errorPanel(String error) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(error, textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          TextButton(onPressed: retry, child: const LocalizedText('Retry')),
+        ],
+      ),
+    ),
+  );
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(widget.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
-        IconButton(
-          tooltip: tr('Find in document'),
-          onPressed: search,
-          icon: const Icon(Icons.search),
+        ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) => IconButton(
+            tooltip: tr('Find in document'),
+            onPressed: controller.status == DocumentViewStatus.ready
+                ? search
+                : null,
+            icon: const Icon(Icons.search),
+          ),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'Page fit',
+          initialValue: mode,
+          onSelected: (value) async {
+            setState(() => mode = value);
+            await controller.setViewMode(value);
+            save();
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'width', child: Text('Fit width')),
+            PopupMenuItem(value: 'actual', child: Text('Original size (100%)')),
+          ],
+          icon: const Icon(Icons.fit_screen),
         ),
         IconButton(
           tooltip: tr('Share original file'),
@@ -96,21 +212,57 @@ class _OfficeViewerState extends State<OfficeViewer> {
           builder: (context, _) {
             final info = controller.info;
             if (info == null) return const SizedBox.shrink();
-            final warning = info.format.fidelity == FidelityLevel.textOnly
-                ? (info.format == DocumentFormat.doc
-                      ? 'Legacy Word preview preserves text and tables; page breaks and floating objects may differ.'
-                      : 'Text preview only. Original layout is not available for this legacy format.')
-                : info.format.fidelity == FidelityLevel.partial
-                ? 'Some original formatting may not appear in this format.'
-                : info.truncated
-                ? 'Preview limits reached. Some rows or columns are not shown.'
-                : null;
+            final warnings = <String>[
+              if (info.format.fidelity == FidelityLevel.textOnly)
+                info.format == DocumentFormat.doc
+                    ? 'Legacy Word: text and tables are shown; floating objects and page breaks may differ.'
+                    : 'Legacy text preview: original layout is unavailable.',
+              if (info.format.fidelity == FidelityLevel.partial)
+                'Some original formatting may differ.',
+              if (info.truncated)
+                'Preview limit reached: some rows or columns are not shown.',
+            ];
             return Column(
               children: [
-                if (warning != null)
+                for (final warning in warnings)
                   Padding(
                     padding: const EdgeInsets.all(8),
                     child: Text(warning),
+                  ),
+                if (query.isNotEmpty)
+                  Row(
+                    children: [
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '${controller.searchIndex < 0 ? 0 : controller.searchIndex + 1}/${controller.searchHits} — $query',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Previous result',
+                        onPressed: controller.searchHits > 0
+                            ? () => controller.moveSearch(-1)
+                            : null,
+                        icon: const Icon(Icons.keyboard_arrow_up),
+                      ),
+                      IconButton(
+                        tooltip: 'Next result',
+                        onPressed: controller.searchHits > 0
+                            ? () => controller.moveSearch(1)
+                            : null,
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                      ),
+                      IconButton(
+                        tooltip: 'Clear search',
+                        onPressed: () {
+                          setState(() => query = '');
+                          controller.search('');
+                        },
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
                 if (info.outline.isNotEmpty &&
                     info.format.family != FormatFamily.excel)
@@ -119,12 +271,9 @@ class _OfficeViewerState extends State<OfficeViewer> {
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: info.outline.length,
-                      itemBuilder: (context, index) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: TextButton(
-                          onPressed: () => controller.goTo(index),
-                          child: Text(info.outline[index]),
-                        ),
+                      itemBuilder: (context, index) => TextButton(
+                        onPressed: () => controller.goTo(index),
+                        child: Text(info.outline[index]),
                       ),
                     ),
                   ),
@@ -133,37 +282,38 @@ class _OfficeViewerState extends State<OfficeViewer> {
           },
         ),
         Expanded(
-          child: DocumentView(
-            key: ValueKey('${widget.path}:$generation'),
-            source: DocumentSource.file(widget.path),
-            controller: controller,
-            placeholderBuilder: (_) => const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  LocalizedText('Preparing preview…'),
-                ],
-              ),
-            ),
-            errorBuilder: (_, failure) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(failureText(failure), textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => setState(() => generation++),
-                      child: const LocalizedText('Retry'),
+          child: cancelled
+              ? errorPanel('Preview cancelled.')
+              : DocumentView(
+                  key: ValueKey('${widget.path}:$generation'),
+                  source: source,
+                  controller: controller,
+                  renderTimeout: const Duration(seconds: 60),
+                  onReady: (info) => unawaited(restore(info)),
+                  placeholderBuilder: (_) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        ListenableBuilder(
+                          listenable: controller,
+                          builder: (_, _) => Text(
+                            controller.status == DocumentViewStatus.preparing
+                                ? 'Checking and preparing document…'
+                                : 'Rendering document…',
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => setState(() => cancelled = true),
+                          child: const LocalizedText('Cancel'),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                  errorBuilder: (_, failure) =>
+                      errorPanel(failureText(failure)),
                 ),
-              ),
-            ),
-          ),
         ),
       ],
     ),

@@ -9,6 +9,8 @@
   'use strict';
 
   const stage = document.getElementById('stage');
+  let viewMode = 'width';
+  Bridge.on('viewMode', function(payload) { viewMode = payload.mode; fitLegacy(); });
 
   /* PAGEFLOW PATCH: fit legacy Word paper without altering table widths. */
   function fitLegacy() {
@@ -20,7 +22,7 @@
     }
     paper.style.transform = '';
     stage.style.height = '';
-    const scale = Math.min(1, document.documentElement.clientWidth / paper.offsetWidth);
+    const scale = viewMode === 'actual' ? 1 : Math.min(1, document.documentElement.clientWidth / paper.offsetWidth);
     stage.style.height = paper.offsetHeight * scale + 'px';
     stage.style.position = 'relative';
     paper.style.position = 'absolute';
@@ -52,7 +54,7 @@
   });
 
   Bridge.on('search', function (payload) {
-    const query = (payload.query || '').toLocaleLowerCase('tr');
+    const query = (payload.query || '').toLowerCase();
 
     stage.querySelectorAll('mark.hit').forEach(function (mark) {
       const parent = mark.parentNode;
@@ -69,14 +71,14 @@
     const walker = document.createTreeWalker(stage, NodeFilter.SHOW_TEXT);
     const targets = [];
     while (walker.nextNode()) {
-      if (walker.currentNode.nodeValue.toLocaleLowerCase('tr').indexOf(query) >= 0) {
+      if (walker.currentNode.nodeValue.toLowerCase().indexOf(query) >= 0) {
         targets.push(walker.currentNode);
       }
     }
 
     targets.forEach(function (node) {
       const value = node.nodeValue;
-      const lower = value.toLocaleLowerCase('tr');
+      const lower = value.toLowerCase();
       const fragment = document.createDocumentFragment();
       let cursor = 0;
       let found = lower.indexOf(query, cursor);

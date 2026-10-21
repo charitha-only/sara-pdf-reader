@@ -1,3 +1,5 @@
+import 'reading_state.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -70,6 +72,7 @@ class LibraryBackup {
         'path': null,
         'payload': payload,
         'sha256': sha256.convert(bytes).toString(),
+        'viewerState': await ReadingStateStore.load(path),
       });
     }
     final manifest = utf8.encode(
@@ -182,6 +185,17 @@ class LibraryBackup {
         final item = {...entry.item, 'path': file.path}
           ..remove('payload')
           ..remove('sha256');
+        final viewerState = item.remove('viewerState');
+        if (viewerState is Map) {
+          try {
+            await ReadingStateStore.save(
+              file.path,
+              Map<String, dynamic>.from(viewerState),
+            );
+          } catch (_) {
+            /* Reading state is optional on non-device test hosts. */
+          }
+        }
         restored.add(item);
       }
       progress?.check();

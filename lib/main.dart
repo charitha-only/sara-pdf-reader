@@ -1,3 +1,5 @@
+import 'reading_state.dart';
+import 'release_links.dart';
 import 'file_mime.dart';
 import 'image_viewer.dart';
 
@@ -55,6 +57,7 @@ const _editingEnabled = bool.fromEnvironment(
   'PAGEFLOW_EDITING',
   defaultValue: false,
 );
+final _incomingRevision = ValueNotifier<int>(0);
 const _shareChannel = MethodChannel('pageflow_reader/share');
 
 String _kindForPath(String path) {
@@ -233,10 +236,23 @@ class PageflowApp extends StatefulWidget {
 
 class _PageflowAppState extends State<PageflowApp> {
   bool _darkMode = false;
+  bool _documentLaunch = false;
 
   @override
   void initState() {
     super.initState();
+    incomingChannel.setMethodCallHandler((call) async {
+      if (call.method == 'incomingReady') {
+        if (mounted && !_documentLaunch) setState(() => _documentLaunch = true);
+        _incomingRevision.value++;
+      }
+    });
+    incomingChannel
+        .invokeMethod<bool>('hasIncoming')
+        .then((value) {
+          if (mounted && value == true) setState(() => _documentLaunch = true);
+        })
+        .catchError((Object _) {});
     _loadThemePreference();
     AppLanguage.instance.load();
     AppLanguage.instance.addListener(_localeChanged);
@@ -313,7 +329,9 @@ class _PageflowAppState extends State<PageflowApp> {
       fontFamily: 'Pageflow UI',
     ),
     themeMode: _darkMode ? ThemeMode.dark : ThemeMode.light,
-    home: WelcomePage(onDarkModeChanged: _setDarkMode),
+    home: _documentLaunch
+        ? HomePage(onDarkModeChanged: _setDarkMode)
+        : WelcomePage(onDarkModeChanged: _setDarkMode),
   );
 }
 
@@ -571,6 +589,18 @@ class _FormatTile extends StatelessWidget {
   );
 }
 
+class _ImportFile {
+  _ImportFile.local(this.path, this.name) : picked = null;
+  _ImportFile.platform(PlatformFile value)
+    : picked = value,
+      path = value.path,
+      name = value.name;
+  final String? path;
+  final String name;
+  final PlatformFile? picked;
+  Future<int?> length() => picked?.length() ?? File(path!).length();
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.onDarkModeChanged});
   final ValueChanged<bool> onDarkModeChanged;
@@ -586,12 +616,65 @@ class _HomePageState extends State<HomePage> {
   String _sortOrder = 'newest';
   final Set<String> _selectedPaths = {};
   bool _loadingDocuments = true;
+  int _visibleLimit = 50;
+  bool _receiving = false;
+  bool _importing = false;
+  Timer? _searchDebounce;
+  String? _lastImportFailure;
   Future<void> _indexWrite = Future<void>.value();
 
   @override
   void initState() {
     super.initState();
-    _loadDocuments();
+    _incomingRevision.addListener(_incomingChanged);
+    _loadDocuments().then((_) => _receiveIncoming());
+  }
+
+  void _incomingChanged() {
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    unawaited(_receiveIncoming());
+  }
+
+  Future<void> _receiveIncoming() async {
+    if (_loadingDocuments || _receiving || _importing || !mounted) return;
+    _receiving = true;
+    try {
+      while (mounted) {
+        final reply = await incomingChannel.invokeMapMethod<String, dynamic>(
+          'takeIncoming',
+        );
+        if (reply == null) break;
+        if (reply['error'] is String) _message(reply['error'] as String);
+        final entries = (reply['files'] as List? ?? [])
+            .whereType<Map>()
+            .toList();
+        if (entries.isEmpty) break;
+        final files = <_ImportFile>[];
+        for (final entry in entries) {
+          final path = entry['path'] as String?;
+          if (path == null) continue;
+          files.add(
+            _ImportFile.local(path, entry['name'] as String? ?? 'Document'),
+          );
+        }
+        try {
+          await _importPdf(received: files);
+        } finally {
+          for (final file in files) {
+            await incomingChannel.invokeMethod<void>('removeIncomingCopy', {
+              'path': file.path,
+            });
+          }
+        }
+      }
+    } on MissingPluginException {
+      /* Non-Android test host. */
+    } catch (error) {
+      if (mounted) _message('Could not receive document: $error');
+    } finally {
+      _receiving = false;
+    }
   }
 
   Future<Directory> _pdfDirectory() async {
@@ -623,6 +706,20 @@ class _HomePageState extends State<HomePage> {
             'sizeAsc',
           };
           final sortOrder = saved['sortOrder'] as String;
+          _filter =
+              saved['filter'] is String &&
+                  [
+                    'All',
+                    'Favorites',
+                    'PDF',
+                    'Word',
+                    'Excel',
+                    'PPT',
+                    'TXT',
+                    'Image',
+                  ].contains(saved['filter'])
+              ? saved['filter'] as String
+              : 'All';
           if (supportedSorts.contains(sortOrder)) _sortOrder = sortOrder;
         }
       }
@@ -704,14 +801,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _setSortOrder(String value) async {
-    setState(() => _sortOrder = value);
+    setState(() {
+      _sortOrder = value;
+      _visibleLimit = 50;
+    });
     try {
       final directory = await _pdfDirectory();
       final preferences = File(
         '${directory.path}${Platform.pathSeparator}library-preferences.json',
       );
       await preferences.writeAsString(
-        jsonEncode({'sortOrder': value}),
+        jsonEncode({'sortOrder': value, 'filter': _filter}),
         flush: true,
       );
     } catch (_) {
@@ -769,211 +869,276 @@ class _HomePageState extends State<HomePage> {
     await _saveDocuments();
   }
 
-  Future<void> _importPdf() async {
-    List<PlatformFile> result;
+  Future<void> _importPdf({List<_ImportFile>? received}) async {
+    if (_importing) return;
+    List<_ImportFile> result;
     try {
-      result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: const [
-          'pdf',
-          'docx',
-          'xlsx',
-          'pptx',
-          'txt',
-          'plain',
-          'doc',
-          'xls',
-          'ppt',
-          'rtf',
-          'csv',
-          'tsv',
-          'docm',
-          'xlsm',
-          'pptm',
-          'png',
-          'jpg',
-          'jpeg',
-          'webp',
-          'gif',
-          'bmp',
-        ],
-      );
+      result =
+          received ??
+          await FilePicker.pickFiles(
+            type: FileType.custom,
+            allowedExtensions: const [
+              'pdf',
+              'docx',
+              'xlsx',
+              'pptx',
+              'txt',
+              'plain',
+              'doc',
+              'xls',
+              'ppt',
+              'rtf',
+              'csv',
+              'tsv',
+              'docm',
+              'xlsm',
+              'pptm',
+              'png',
+              'jpg',
+              'jpeg',
+              'webp',
+              'gif',
+              'bmp',
+            ],
+          ).then((files) => files.map(_ImportFile.platform).toList());
     } catch (error) {
       if (mounted) _message('Could not open the file picker: $error');
       return;
     }
     if (!mounted || result.isEmpty) return;
+    _importing = true;
+    _lastImportFailure = null;
     try {
       final directory = await _pdfDirectory();
       final imported = <_Document>[];
       var failed = 0;
-      for (var index = 0; index < result.length; index++) {
-        final pickedFile = result[index];
-        final sourcePath = pickedFile.path;
-        if (sourcePath == null) {
-          failed++;
-          continue;
-        }
-        File? copiedFile;
-        pdfrx.PdfDocument? validationDocument;
-        try {
-          final fileSize = await pickedFile.length();
-          if (fileSize != null && fileSize > 256 * 1024 * 1024) {
-            throw const FormatException('Import files up to 256 MB.');
-          }
-          final size = fileSize == null
-              ? 'Size unknown'
-              : fileSize >= 1024 * 1024
-              ? '${(fileSize / 1024 / 1024).toStringAsFixed(1)} MB'
-              : '${(fileSize / 1024).round()} KB';
-          final safeName = pickedFile.name.replaceAll(
-            RegExp(r'[<>:"/\\|?*]'),
-            '_',
-          );
-          copiedFile = await File(sourcePath).copy(
-            '${directory.path}${Platform.pathSeparator}'
-            '${DateTime.now().microsecondsSinceEpoch}-$index-$safeName',
-          );
-          final extension = pickedFile.name.split('.').last.toLowerCase();
-          var kind = 'PDF';
-          if (extension == 'pdf') {
-            await pdfrx.pdfrxFlutterInitialize();
+      var cancelled = false;
+      if (!mounted) return;
+      try {
+        await runPdfTask(context, 'Importing documents', (progress) async {
+          for (var index = 0; index < result.length; index++) {
+            await progress.step(
+              'Checking ${result[index].name}',
+              done: index,
+              total: result.length,
+            );
+            final pickedFile = result[index];
+            final sourcePath = pickedFile.path;
+            if (sourcePath == null) {
+              failed++;
+              continue;
+            }
+            File? copiedFile;
+            pdfrx.PdfDocument? validationDocument;
             try {
-              validationDocument = await pdfrx.PdfDocument.openFile(
-                copiedFile.path,
+              final fileSize = await pickedFile.length();
+              if (fileSize != null && fileSize > 256 * 1024 * 1024) {
+                throw const FormatException('Import files up to 256 MB.');
+              }
+              final size = fileSize == null
+                  ? 'Size unknown'
+                  : fileSize >= 1024 * 1024
+                  ? '${(fileSize / 1024 / 1024).toStringAsFixed(1)} MB'
+                  : '${(fileSize / 1024).round()} KB';
+              final safeName = pickedFile.name.replaceAll(
+                RegExp(r'[<>:"/\\|?*]'),
+                '_',
               );
-            } on pdfrx.PdfPasswordException {
-              Uint8List? unlocked;
-              for (
-                var attempt = 0;
-                attempt < 3 && unlocked == null;
-                attempt++
-              ) {
-                if (!mounted) throw const TaskCancelled();
-                final password = await showDialog<String>(
-                  context: context,
-                  builder: (_) => const DocumentPasswordDialog(),
-                );
-                if (password == null) throw const TaskCancelled();
+              final extensionCheck = pickedFile.name
+                  .split('.')
+                  .last
+                  .toLowerCase();
+              final limit = ['txt', 'plain'].contains(extensionCheck)
+                  ? 8
+                  : [
+                      'png',
+                      'jpg',
+                      'jpeg',
+                      'webp',
+                      'gif',
+                      'bmp',
+                    ].contains(extensionCheck)
+                  ? 32
+                  : extensionCheck == 'pdf'
+                  ? 256
+                  : extensionCheck == 'doc'
+                  ? 20
+                  : 80;
+              if (fileSize != null && fileSize > limit * 1024 * 1024) {
+                throw FormatException('This file exceeds the $limit MB limit.');
+              }
+              progress.check();
+              copiedFile = await File(sourcePath).copy(
+                '${directory.path}${Platform.pathSeparator}'
+                '${DateTime.now().microsecondsSinceEpoch}-$index-$safeName',
+              );
+              progress.check();
+              final extension = pickedFile.name.split('.').last.toLowerCase();
+              var kind = 'PDF';
+              if (extension == 'pdf') {
+                await pdfrx.pdfrxFlutterInitialize();
                 try {
-                  unlocked = await PdfiumObjectEditor.unlock(
-                    await copiedFile.readAsBytes(),
-                    password,
+                  validationDocument = await pdfrx.PdfDocument.openFile(
+                    copiedFile.path,
                   );
-                } catch (_) {
-                  if (mounted) {
-                    _message(
-                      'Incorrect password or unreadable PDF. Try again.',
+                } on pdfrx.PdfPasswordException {
+                  Uint8List? unlocked;
+                  for (
+                    var attempt = 0;
+                    attempt < 3 && unlocked == null;
+                    attempt++
+                  ) {
+                    if (!mounted) throw const TaskCancelled();
+                    final password = await showDialog<String>(
+                      context: context,
+                      builder: (_) => const DocumentPasswordDialog(),
                     );
+                    if (password == null) throw const TaskCancelled();
+                    try {
+                      unlocked = await PdfiumObjectEditor.unlock(
+                        await copiedFile.readAsBytes(),
+                        password,
+                      );
+                    } catch (_) {
+                      if (mounted) {
+                        _message(
+                          'Incorrect password or unreadable PDF. Try again.',
+                        );
+                      }
+                    }
                   }
+                  if (unlocked == null) {
+                    throw const FormatException('Could not unlock this PDF.');
+                  }
+                  await copiedFile.writeAsBytes(unlocked, flush: true);
+                  validationDocument = await pdfrx.PdfDocument.openFile(
+                    copiedFile.path,
+                  );
                 }
+                if (validationDocument.pages.isEmpty) {
+                  throw const FormatException(
+                    'This PDF has no readable pages.',
+                  );
+                }
+                await validationDocument.dispose();
+                validationDocument = null;
+              } else if ([
+                'png',
+                'jpg',
+                'jpeg',
+                'webp',
+                'gif',
+                'bmp',
+              ].contains(extension)) {
+                if (await copiedFile.length() > 32 * 1024 * 1024) {
+                  throw const FormatException(
+                    'Images up to 32 MB are supported.',
+                  );
+                }
+                final codec = await ui.instantiateImageCodec(
+                  await copiedFile.readAsBytes(),
+                  targetWidth: 2560,
+                  targetHeight: 2560,
+                  allowUpscaling: false,
+                );
+                try {
+                  final frame = await codec.getNextFrame();
+                  frame.image.dispose();
+                } finally {
+                  codec.dispose();
+                }
+                kind = 'Image';
+              } else if (extension == 'txt' || extension == 'plain') {
+                if (await copiedFile.length() > 8 * 1024 * 1024) {
+                  throw const FormatException(
+                    'Text files up to 8 MB are supported.',
+                  );
+                }
+                await copiedFile.readAsString();
+                kind = 'TXT';
+              } else {
+                final report = await compute(_officePreflight, (
+                  await copiedFile.readAsBytes(),
+                  pickedFile.name,
+                ));
+                if (report is odv.DocumentFailure) {
+                  throw FormatException(
+                    report is odv.EncryptedDocumentFailure
+                        ? 'Password-protected Office files need an unlocked copy.'
+                        : report is odv.TooLargeFailure
+                        ? 'This document exceeds the preview size or archive limits.'
+                        : report is odv.UnsupportedFormatFailure
+                        ? 'Unsupported document format.'
+                        : 'This document is damaged or cannot be read.',
+                  );
+                }
+                final format = (report as odv.PreflightReport).format;
+                kind = switch (format.family) {
+                  odv.FormatFamily.word => 'Word',
+                  odv.FormatFamily.excel => 'Excel',
+                  odv.FormatFamily.powerPoint => 'PPT',
+                  _ => 'PDF',
+                };
               }
-              if (unlocked == null) {
-                throw const FormatException('Could not unlock this PDF.');
-              }
-              await copiedFile.writeAsBytes(unlocked, flush: true);
-              validationDocument = await pdfrx.PdfDocument.openFile(
-                copiedFile.path,
+              final now = DateTime.now();
+              imported.add(
+                _Document(
+                  pickedFile.name,
+                  kind,
+                  size,
+                  '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}',
+                  path: copiedFile.path,
+                ),
               );
+            } catch (error) {
+              _lastImportFailure = error is TaskCancelled
+                  ? null
+                  : '${pickedFile.name}: $error';
+              try {
+                await validationDocument?.dispose();
+              } catch (_) {}
+              try {
+                if (copiedFile != null && await copiedFile.exists()) {
+                  await copiedFile.delete();
+                }
+              } catch (_) {}
+              if (error is TaskCancelled) rethrow;
+              failed++;
             }
-            if (validationDocument.pages.isEmpty) {
-              throw const FormatException('This PDF has no readable pages.');
-            }
-            await validationDocument.dispose();
-            validationDocument = null;
-          } else if ([
-            'png',
-            'jpg',
-            'jpeg',
-            'webp',
-            'gif',
-            'bmp',
-          ].contains(extension)) {
-            if (await copiedFile.length() > 32 * 1024 * 1024) {
-              throw const FormatException('Images up to 32 MB are supported.');
-            }
-            final codec = await ui.instantiateImageCodec(
-              await copiedFile.readAsBytes(),
-              targetWidth: 2560,
-              targetHeight: 2560,
-              allowUpscaling: false,
-            );
-            try {
-              final frame = await codec.getNextFrame();
-              frame.image.dispose();
-            } finally {
-              codec.dispose();
-            }
-            kind = 'Image';
-          } else if (extension == 'txt' || extension == 'plain') {
-            if (await copiedFile.length() > 8 * 1024 * 1024) {
-              throw const FormatException(
-                'Text files up to 8 MB are supported.',
-              );
-            }
-            await copiedFile.readAsString();
-            kind = 'TXT';
-          } else {
-            final report = odv.DocumentPreflight.inspect(
-              bytes: await copiedFile.readAsBytes(),
-              fileName: pickedFile.name,
-            );
-            if (report is odv.DocumentFailure) {
-              throw FormatException(
-                'This document could not be opened: ${report.runtimeType}',
-              );
-            }
-            final format = (report as odv.PreflightReport).format;
-            kind = switch (format.family) {
-              odv.FormatFamily.word => 'Word',
-              odv.FormatFamily.excel => 'Excel',
-              odv.FormatFamily.powerPoint => 'PPT',
-              _ => 'PDF',
-            };
           }
-          final now = DateTime.now();
-          imported.add(
-            _Document(
-              pickedFile.name,
-              kind,
-              size,
-              '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}',
-              path: copiedFile.path,
-            ),
-          );
-        } catch (_) {
-          try {
-            await validationDocument?.dispose();
-          } catch (_) {}
-          try {
-            if (copiedFile != null && await copiedFile.exists()) {
-              await copiedFile.delete();
-            }
-          } catch (_) {}
-          failed++;
-        }
+        });
+      } on TaskCancelled {
+        cancelled = true;
       }
       if (!mounted) return;
       if (imported.isEmpty) {
         _message(
-          'No document could be imported. Check the file format and access, then try again.',
+          cancelled
+              ? 'Import cancelled.'
+              : (_lastImportFailure ??
+                    'No document could be imported. Check the file format and access, then try again.'),
         );
         return;
       }
       setState(() => _documents.insertAll(0, imported));
       await _saveDocuments();
       if (!mounted) return;
-      if (imported.length == 1 && result.length == 1) {
+      if (!cancelled && imported.length == 1 && result.length == 1) {
         await _openPdf(imported.single);
       } else {
         _message(
-          failed == 0
+          cancelled
+              ? '${imported.length} documents added before cancellation.'
+              : failed == 0
               ? '${imported.length} documents added to your library.'
               : '${imported.length} documents added; $failed could not be imported.',
         );
       }
     } catch (error) {
-      if (mounted) _message('Could not save this PDF: $error');
+      if (mounted) _message('Could not import document: $error');
+    } finally {
+      _importing = false;
+      if (!_receiving && mounted) unawaited(_receiveIncoming());
     }
   }
 
@@ -1248,6 +1413,9 @@ class _HomePageState extends State<HomePage> {
       _message('This PDF is missing from the app storage.');
       return;
     }
+    _updateReadingProgress(
+      doc.copyWith(lastOpenedAt: DateTime.now().millisecondsSinceEpoch),
+    );
     if (doc.kind == 'Image') {
       if (!mounted) return;
       await Navigator.of(context).push<void>(
@@ -1347,6 +1515,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _incomingRevision.removeListener(_incomingChanged);
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -1509,6 +1679,7 @@ class _HomePageState extends State<HomePage> {
     if (Platform.isAndroid) {
       try {
         await _shareChannel.invokeMethod<void>('clearSharedCopies');
+        if (failed == 0) await ReadingStateStore.clear();
       } catch (error) {
         failed++;
       }
@@ -1803,7 +1974,15 @@ class _HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 17),
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (value) => setState(() => _query = value),
+                      onChanged: (value) {
+                        _searchDebounce?.cancel();
+                        _searchDebounce = Timer(
+                          const Duration(milliseconds: 180),
+                          () {
+                            if (mounted) setState(() => _query = value.trim());
+                          },
+                        );
+                      },
                       decoration: InputDecoration(
                         hintText: tr('Search your documents...'),
                         hintStyle: const TextStyle(
@@ -1816,6 +1995,7 @@ class _HomePageState extends State<HomePage> {
                             : IconButton(
                                 tooltip: 'Clear search',
                                 onPressed: () {
+                                  _searchDebounce?.cancel();
                                   _searchController.clear();
                                   setState(() => _query = '');
                                 },
@@ -1852,7 +2032,10 @@ class _HomePageState extends State<HomePage> {
                                 (kind) => _FilterChip(
                                   kind: kind,
                                   selected: _filter == kind,
-                                  onTap: () => setState(() => _filter = kind),
+                                  onTap: () {
+                                    setState(() => _filter = kind);
+                                    unawaited(_setSortOrder(_sortOrder));
+                                  },
                                 ),
                               )
                               .toList(),
@@ -1908,7 +2091,7 @@ class _HomePageState extends State<HomePage> {
                                 Text(
                                   resumeDocument == null
                                       ? 'View your latest files in one place'
-                                      : '${resumeDocument.name} · Page ${resumeDocument.lastPage}',
+                                      : '${resumeDocument.name}${resumeDocument.kind == 'PDF' ? ' · Page ${resumeDocument.lastPage}' : ' · Resume reading'}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -2031,6 +2214,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             TextButton(
                               onPressed: () {
+                                _searchDebounce?.cancel();
                                 _searchController.clear();
                                 setState(() {
                                   _filter = 'All';
@@ -2063,22 +2247,32 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(21),
                       ),
                       child: Column(
-                        children: shown
-                            .map(
-                              (doc) => _DocumentTile(
-                                document: doc,
-                                selected:
-                                    doc.path != null &&
-                                    _selectedPaths.contains(doc.path),
-                                onTap: () => _selectedPaths.isNotEmpty
-                                    ? _toggleDocumentSelection(doc)
-                                    : _openPdf(doc),
-                                onLongPress: () =>
-                                    _toggleDocumentSelection(doc),
-                                onMenu: () => _showDocumentActions(doc),
+                        children: [
+                          ...shown
+                              .take(_visibleLimit)
+                              .map(
+                                (doc) => _DocumentTile(
+                                  document: doc,
+                                  selected:
+                                      doc.path != null &&
+                                      _selectedPaths.contains(doc.path),
+                                  onTap: () => _selectedPaths.isNotEmpty
+                                      ? _toggleDocumentSelection(doc)
+                                      : _openPdf(doc),
+                                  onLongPress: () =>
+                                      _toggleDocumentSelection(doc),
+                                  onMenu: () => _showDocumentActions(doc),
+                                ),
                               ),
-                            )
-                            .toList(),
+                          if (shown.length > _visibleLimit)
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => _visibleLimit += 50),
+                              child: Text(
+                                'Show more (${shown.length - _visibleLimit} remaining)',
+                              ),
+                            ),
+                        ],
                       ),
                     )
                   else
@@ -2097,9 +2291,9 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 8),
                           Text(
                             _documents.isEmpty
-                                ? 'Your PDF library is empty'
+                                ? 'Your document library is empty'
                                 : _filter == 'Favorites'
-                                ? 'No favorite PDFs yet'
+                                ? 'No favorite documents yet'
                                 : 'No documents found',
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
@@ -2108,7 +2302,7 @@ class _HomePageState extends State<HomePage> {
                             _documents.isEmpty
                                 ? 'Import a file to start reading offline'
                                 : _filter == 'Favorites'
-                                ? 'Use a PDF menu to add favorites'
+                                ? 'Use a document menu to add favorites'
                                 : 'Try another search or category',
                             style: const TextStyle(
                               color: Color(0xFF7E979A),
@@ -2125,6 +2319,7 @@ class _HomePageState extends State<HomePage> {
                           else if (_query.isNotEmpty)
                             TextButton(
                               onPressed: () {
+                                _searchDebounce?.cancel();
                                 _searchController.clear();
                                 setState(() => _query = '');
                               },
@@ -2231,12 +2426,41 @@ class _SettingsPage extends StatelessWidget {
       children: [
         const LanguageChoice(),
         ListTile(
+          leading: const Icon(Icons.system_update_alt),
+          title: const Text('Latest version / update notes'),
+          subtitle: const Text('Open GitHub releases in your browser'),
+          onTap: () async {
+            try {
+              await openReleaseLink(latestReleaseUrl);
+            } catch (error) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('$error')));
+              }
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.history),
+          title: const Text('All versions and APK downloads'),
+          onTap: () async {
+            try {
+              await openReleaseLink(allReleasesUrl);
+            } catch (error) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('$error')));
+              }
+            }
+          },
+        ),
+        ListTile(
           leading: const Icon(Icons.info_outline),
           title: const LocalizedText('Open-source licenses'),
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.01',
+            applicationVersion: 'v1.02',
           ),
         ),
         Card(
@@ -2310,7 +2534,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.01',
+            'Sara PDF Reader · v1.02',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -2640,6 +2864,8 @@ class _PdfReaderPage extends StatefulWidget {
 class _PdfReaderPageState extends State<_PdfReaderPage> {
   final pdfrx.PdfViewerController _controller = pdfrx.PdfViewerController();
   late final Future<pdfrx.PdfDocument> _readerDocument;
+  pdfrx.PdfTextSearcher? _textSearcher;
+  String _pdfQuery = '';
   bool _fitWholePage = false;
   bool _sepia = false;
   late int _page;
@@ -2729,6 +2955,7 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
 
   @override
   void dispose() {
+    _textSearcher?.dispose();
     super.dispose();
   }
 
@@ -4522,7 +4749,8 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
   }
 
   Future<void> _searchInPdf() async {
-    final input = TextEditingController();
+    if (_textSearcher == null) return;
+    final input = TextEditingController(text: _pdfQuery);
     final query = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -4532,138 +4760,43 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
           autofocus: true,
           textInputAction: TextInputAction.search,
           onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
-          decoration: InputDecoration(
-            hintText: tr('Enter a word or phrase'),
-            prefixIcon: Icon(Icons.search),
+          decoration: const InputDecoration(
+            hintText: 'Sinhala or English text',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const LocalizedText('Cancel'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, input.text.trim()),
-            child: const LocalizedText('Search'),
+            child: const Text('Find'),
           ),
         ],
       ),
     );
     Future<void>.delayed(const Duration(milliseconds: 300), input.dispose);
-    if (query == null || query.isEmpty || !mounted) return;
-
-    try {
-      final pages = await _readPdfPages();
-      if (!mounted) return;
-      final matches = await runPdfTask(context, 'Searching document', (
-        progress,
-      ) async {
-        final matches = <(int, String)>[];
-        final needle = query.toLowerCase();
-        for (var pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-          await progress.step(
-            'Searching page ${pageIndex + 1} of ${pages.length}',
-            done: pageIndex,
-            total: pages.length,
-          );
-          final pageText = pages[pageIndex];
-          final lower = pageText.toLowerCase();
-          var offset = 0;
-          while (offset < pageText.length) {
-            final matchAt = lower.indexOf(needle, offset);
-            if (matchAt < 0) break;
-            final start = (matchAt - 38).clamp(0, pageText.length).toInt();
-            final end = (matchAt + query.length + 72)
-                .clamp(0, pageText.length)
-                .toInt();
-            final prefix = start > 0 ? '…' : '';
-            final suffix = end < pageText.length ? '…' : '';
-            matches.add((
-              pageIndex + 1,
-              '$prefix${pageText.substring(start, end)}$suffix',
-            ));
-            if (matches.length >= 200) break;
-            offset = matchAt + query.length;
-          }
-          if (matches.length >= 200) break;
-        }
-
-        progress.check();
-        return matches;
-      });
-      if (!mounted) return;
-
-      if (matches.isEmpty) {
-        _message(
-          'No matches for “$query”. Try another word or a clearer scan.',
-        );
-        return;
-      }
-
-      await showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (sheetContext) => SafeArea(
-          child: SizedBox(
-            height: MediaQuery.sizeOf(sheetContext).height * .68,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: LocalizedText(
-                    '${matches.length}${matches.length == 200 ? '+' : ''} results for “$query”',
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: ink,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: matches.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final (pageNumber, snippet) = matches[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: aqua,
-                          foregroundColor: teal,
-                          child: LocalizedText('$pageNumber'),
-                        ),
-                        title: Text(
-                          snippet,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          _controller.goToPage(
-                            pageNumber: pageNumber,
-                            duration: const Duration(milliseconds: 350),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } catch (error) {
-      if (!mounted) return;
-
-      _message(
-        error is TaskCancelled
-            ? 'Search cancelled.'
-            : 'Could not search this PDF: $error',
-      );
+    if (!mounted || query == null) return;
+    setState(() => _pdfQuery = query);
+    _textSearcher!.resetTextSearch();
+    if (query.isNotEmpty) {
+      _textSearcher!.startTextSearch(query, searchImmediately: true);
     }
+  }
+
+  Future<void> _movePdfMatch(int direction) async {
+    final searcher = _textSearcher;
+    if (searcher == null || searcher.matches.isEmpty) return;
+    await searcher.goToMatchOfIndex(
+      ((searcher.currentIndex ?? (direction > 0 ? -1 : 0)) + direction) %
+          searcher.matches.length,
+    );
+    if (mounted) setState(() {});
+  }
+
+  void _searchChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -4707,7 +4840,7 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
             ),
           IconButton(
             tooltip: 'Find in PDF',
-            onPressed: _searchInPdf,
+            onPressed: _textSearcher == null ? null : _searchInPdf,
             icon: const Icon(Icons.search),
           ),
           PopupMenuButton<String>(
@@ -4874,6 +5007,52 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
       ),
       body: Column(
         children: [
+          if (_pdfQuery.isNotEmpty && _textSearcher != null)
+            Material(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              child: Column(
+                children: [
+                  if (_textSearcher!.isSearching)
+                    LinearProgressIndicator(
+                      value: _textSearcher!.searchProgress,
+                    ),
+                  Row(
+                    children: [
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '${_textSearcher!.currentIndex == null ? 0 : _textSearcher!.currentIndex! + 1}/${_textSearcher!.matches.length} — $_pdfQuery',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Previous result',
+                        onPressed: _textSearcher!.matches.isEmpty
+                            ? null
+                            : () => _movePdfMatch(-1),
+                        icon: const Icon(Icons.keyboard_arrow_up),
+                      ),
+                      IconButton(
+                        tooltip: 'Next result',
+                        onPressed: _textSearcher!.matches.isEmpty
+                            ? null
+                            : () => _movePdfMatch(1),
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                      ),
+                      IconButton(
+                        tooltip: 'Cancel search',
+                        onPressed: () {
+                          _textSearcher!.resetTextSearch();
+                          setState(() => _pdfQuery = '');
+                        },
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 10, 18, 8),
             child: Row(
@@ -5014,7 +5193,11 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
                         controller: _controller,
                         initialPageNumber: _page,
                         params: pdfrx.PdfViewerParams(
-                          maxImageBytesCachedOnMemory: 48 * 1024 * 1024,
+                          maxImageBytesCachedOnMemory: 32 * 1024 * 1024,
+                          pagePaintCallbacks: [
+                            if (_textSearcher != null)
+                              _textSearcher!.pageTextMatchPaintCallback,
+                          ],
                           verticalCacheExtent: .5,
                           onPageChanged: (page) {
                             if (!mounted ||
@@ -5033,6 +5216,8 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
                               _page = _page.clamp(1, _pages!).toInt();
                               _bookmarkedPages.removeWhere((p) => p > _pages!);
                             });
+                            _textSearcher ??= pdfrx.PdfTextSearcher(_controller)
+                              ..addListener(_searchChanged);
                             _saveProgress();
                             _fitPage(_fitWholePage);
                           },
@@ -5871,3 +6056,6 @@ class _ToolButton extends StatelessWidget {
     );
   }
 }
+
+Object _officePreflight((Uint8List, String) request) =>
+    odv.DocumentPreflight.inspect(bytes: request.$1, fileName: request.$2);

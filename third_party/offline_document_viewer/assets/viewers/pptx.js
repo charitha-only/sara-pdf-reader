@@ -11,6 +11,9 @@
   'use strict';
 
   const stage = document.getElementById('stage');
+  let viewMode = 'width';
+  Bridge.on('viewMode', function(payload) { viewMode=payload.mode; fitToWidth(stage.querySelectorAll('.slide')); });
+  window.addEventListener('resize', () => fitToWidth(stage.querySelectorAll('.slide')));
   let settleTimer = null;
   let startedAt = 0;
 
@@ -56,9 +59,10 @@
   function fitToWidth(slides) {
     const available = document.documentElement.clientWidth;
     slides.forEach(function (slide) {
+      slide.style.transform = ''; slide.style.marginBottom=''; slide.style.marginRight='';
       const width = slide.offsetWidth;
       const height = slide.offsetHeight;
-      if (!width || width <= available) {
+      if (viewMode === 'actual' || !width || width <= available) {
         return;
       }
       const scale = available / width;
@@ -110,11 +114,11 @@
   });
 
   Bridge.on('search', function (payload) {
-    const query = (payload.query || '').toLocaleLowerCase('tr');
+    const query = (payload.query || '').toLowerCase();
     let hits = 0;
     stage.querySelectorAll('.slide').forEach(function (slide) {
       const match =
-        query && (slide.textContent || '').toLocaleLowerCase('tr').indexOf(query) >= 0;
+        query && (slide.textContent || '').toLowerCase().indexOf(query) >= 0;
       slide.classList.toggle('hit', Boolean(match));
       if (match) {
         hits++;

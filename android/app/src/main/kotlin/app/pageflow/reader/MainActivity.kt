@@ -2,6 +2,8 @@ package app.pageflow.reader
 
 import androidx.core.content.FileProvider
 import android.content.ClipData
+import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,6 +19,74 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 class MainActivity : FlutterActivity() {
+    private var incomingBridge: MethodChannel? = null
+    private val incomingFiles = ArrayList<Map<String, String>>()
+    private var incomingError: String? = null
+    private var incomingLaunch = false
+    private fun documentIntent(value: Intent?): Boolean =
+        value?.action == Intent.ACTION_VIEW || value?.action == Intent.ACTION_SEND || value?.action == Intent.ACTION_SEND_MULTIPLE
+
+    override fun onNewIntent(value: Intent) {
+        super.onNewIntent(value)
+        setIntent(value)
+        receiveDocument(value)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun receiveDocument(value: Intent?) {
+        if (!documentIntent(value)) return
+        incomingLaunch = true
+        val uris = when (value?.action) {
+            Intent.ACTION_VIEW -> listOfNotNull(value.data)
+            Intent.ACTION_SEND -> listOfNotNull(value.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
+            else -> value?.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.toList() ?: emptyList()
+        }.distinct().take(20)
+        fileExecutor.execute {
+            val copied = ArrayList<Map<String, String>>()
+            var failure: String? = null
+            for (uri in uris) {
+                var target: File? = null
+                try {
+                    require(uri.scheme == "content" || uri.scheme == "file") { "Unsupported document location." }
+                    var displayName = uri.lastPathSegment ?: "Document"
+                    if (uri.scheme == "content") contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                        if (cursor.moveToFirst()) displayName = cursor.getString(0) ?: displayName
+                    }
+                    displayName = displayName.substringAfterLast('/').substringAfterLast('\\')
+                        .replace(Regex("[<>:\"/\\\\|?*\\p{Cntrl}]"), "_").take(180).ifBlank { "Document" }
+                    if (!displayName.contains('.')) {
+                        MimeTypeMap.getSingleton().getExtensionFromMimeType(contentResolver.getType(uri))?.let { displayName += ".$it" }
+                    }
+                    val directory = File(cacheDir, "incoming").also { it.mkdirs() }
+                    val destination = File(directory, "${System.nanoTime()}-$displayName")
+                    target = destination
+                    contentResolver.openInputStream(uri)?.use { input ->
+                        destination.outputStream().use { output ->
+                            val buffer = ByteArray(65536)
+                            var total = 0L
+                            while (true) {
+                                val count = input.read(buffer)
+                                if (count < 0) break
+                                total += count
+                                require(total <= 256L * 1024 * 1024) { "Document exceeds the 256 MB import limit." }
+                                output.write(buffer, 0, count)
+                            }
+                        }
+                    } ?: error("The sending app did not grant access to this document.")
+                    copied.add(mapOf("path" to destination.absolutePath, "name" to displayName))
+                } catch (error: Exception) {
+                    target?.delete()
+                    failure = error.message ?: "Could not receive this document. Save it to Files and try again."
+                }
+            }
+            runOnUiThread {
+                incomingFiles.addAll(copied)
+                incomingError = failure
+                incomingBridge?.invokeMethod("incomingReady", null)
+            }
+        }
+    }
+
     private var receiverResult: MethodChannel.Result? = null
     private var batchResult: MethodChannel.Result? = null
     private var batchNames: List<String> = emptyList()
@@ -26,7 +96,9 @@ class MainActivity : FlutterActivity() {
         if (!BuildConfig.DEBUG && !hasExpectedReleaseCertificate()) {
             throw SecurityException("Pageflow release signature verification failed.")
         }
+        incomingLaunch = documentIntent(intent)
         super.onCreate(savedInstanceState)
+        receiveDocument(intent)
     }
 
     @Suppress("DEPRECATION")
@@ -48,6 +120,34 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        incomingBridge = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pageflow_reader/incoming")
+        incomingBridge!!.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "hasIncoming" -> result.success(incomingLaunch)
+                "takeIncoming" -> {
+                    result.success(mapOf("files" to incomingFiles.toList(), "error" to incomingError))
+                    incomingFiles.clear(); incomingError = null
+                }
+                "removeIncomingCopy" -> {
+                    val path = call.argument<String>("path")
+                    val file = path?.let { File(it).canonicalFile }
+                    val parent = File(cacheDir, "incoming").canonicalFile
+                    if (file != null && file.parentFile == parent) file.delete()
+                    result.success(null)
+                }
+                "openReleaseLink" -> {
+                    val url = call.argument<String>("url")
+                    if (url != "https://github.com/charitha-only/sara-pdf-reader/releases/latest" &&
+                        url != "https://github.com/charitha-only/sara-pdf-reader/releases") {
+                        result.error("invalid_url", "Unsupported update link.", null)
+                    } else try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE))
+                        result.success(null)
+                    } catch (_: Exception) { result.error("no_browser", "Install a browser to open GitHub releases.", null) }
+                }
+                else -> result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pageflow_reader/office")
             .setMethodCallHandler { call, result ->
                 if (call.method != "renderLegacyWord") { result.notImplemented(); return@setMethodCallHandler }
@@ -87,7 +187,7 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pageflow_reader/share")
             .setMethodCallHandler { call, result ->
                 if(call.method == "clearSharedCopies") {
-                    fileExecutor.execute { try { File(cacheDir, "share").deleteRecursively(); File(cacheDir, "odv_workspaces").deleteRecursively(); runOnUiThread { result.success(null) } } catch(e: Exception) { runOnUiThread { result.error("cleanup_failed", e.message, null) } } }
+                    fileExecutor.execute { try { File(cacheDir, "share").deleteRecursively(); File(cacheDir, "odv_workspaces").deleteRecursively(); File(cacheDir, "incoming").deleteRecursively(); runOnUiThread { result.success(null) } } catch(e: Exception) { runOnUiThread { result.error("cleanup_failed", e.message, null) } } }
                     return@setMethodCallHandler
                 }
                 val verify = BuildConfig.DEBUG && call.method == "verifyReceiver"

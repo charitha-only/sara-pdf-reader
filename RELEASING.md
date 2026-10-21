@@ -53,10 +53,15 @@ so all variants use the same incrementing Android build number. This avoids an
 architecture-based version-code multiplier preventing later universal updates.
 Verify the produced APKs' package, version, certificate and native-library ABI.
 
-Publish ARM64 and ARMv7 APKs as additional assets of the same release, with
-version and ABI in each filename and a separate `.sha256` checksum for each.
-Keep the original universal download and checksum available. Explain the
-device choices and sizes at the top of the release notes and in the README.
+Publish the universal and smaller APKs together (replace the sample version):
+
+```sh
+python tool/publish_release.py --tag v1.02 --apk /path/universal.apk --notes release-notes/v1.02.md --variant arm64-v8a=/path/arm64.apk --variant armeabi-v7a=/path/armv7.apk
+```
+
+The tool checks every variant's package, version, build number, signature,
+alignment and native architecture before creating the draft. All APK hashes
+are recorded in the release's `SHA256SUMS.txt`. Explain device choices and sizes
+at the top of the release notes and in the README.
 These variants retain the same features and offline resources; no Lite-mode
-feature removal is involved. The initial publishing tool handles the universal
-APK; additional ABI assets can be attached to the existing release afterward.
+feature removal is involved. Existing release downloads remain available.

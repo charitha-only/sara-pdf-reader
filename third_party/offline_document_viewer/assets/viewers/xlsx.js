@@ -12,6 +12,9 @@
   const stage = document.getElementById('stage');
   const tabs = document.getElementById('tabs');
   let sheets = [];
+  let currentSheet = 0;
+  let viewMode = 'width';
+  Bridge.on('viewMode', function(payload) { viewMode = payload.mode; fitToWidth(); });
 
   /* Spreadsheets are authored for paper, not phones: official forms in
      particular use dozens of narrow columns, so the used range is often three
@@ -22,7 +25,7 @@
      Scaling preserves every relationship in the sheet and keeps pinch-zoom
      available. The floor stops a very wide sheet from becoming unreadably
      small; past that it scrolls. */
-  const MIN_SCALE = 0.4;
+  const MIN_SCALE = 0.0001;
 
   function fitToWidth() {
     const table = stage.querySelector('table.sheet');
@@ -35,7 +38,8 @@
 
     const available = stage.clientWidth;
     const natural = table.scrollWidth;
-    if (!natural || !available || natural <= available) {
+    stage.style.overflow = viewMode === 'actual' ? 'auto' : 'hidden';
+    if (viewMode === 'actual' || !natural || !available || natural <= available) {
       return;
     }
 
@@ -51,8 +55,10 @@
     if (!sheet) {
       return;
     }
+    currentSheet = index;
     stage.innerHTML = sheet.html;
     fitToWidth();
+    highlightCells();
     Array.prototype.forEach.call(tabs.children, function (button, i) {
       button.setAttribute('aria-selected', String(i === index));
     });
@@ -82,6 +88,7 @@
       bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
     );
 
+    await document.fonts.ready;
     sheets = result.sheets;
     buildTabs();
     show(0);
@@ -106,18 +113,35 @@
     show(payload.index);
   });
 
-  Bridge.on('search', function (payload) {
-    // Türkçe'de büyük/küçük harf eşlemesi İ/ı yüzünden yerel ayara duyarlı.
-    const query = (payload.query || '').toLocaleLowerCase('tr');
-    let hits = 0;
-    stage.querySelectorAll('td').forEach(function (cell) {
-      cell.classList.remove('hit');
-      if (query && cell.textContent.toLocaleLowerCase('tr').indexOf(query) >= 0) {
-        cell.classList.add('hit');
-        hits++;
-      }
+  let results = [], searchQuery = '', resultIndex = -1;
+  function highlightCells() {
+    stage.querySelectorAll('td').forEach(function(cell) {
+      cell.classList.toggle('hit', !!searchQuery && cell.textContent.toLowerCase().includes(searchQuery));
     });
-    Bridge.send('searchResult', { hits: hits });
+  }
+  Bridge.on('search', function(payload) {
+    searchQuery = (payload.query || '').toLowerCase();
+    results = []; resultIndex = -1;
+    if (searchQuery) sheets.forEach(function(sheet, sheetIndex) {
+      const template = document.createElement('template'); template.innerHTML = sheet.html;
+      template.content.querySelectorAll('td').forEach(function(cell, cellIndex) {
+        if (results.length < 2000 && cell.textContent.toLowerCase().includes(searchQuery)) results.push({sheet:sheetIndex, cell:cellIndex});
+      });
+    });
+    highlightCells();
+    Bridge.send('searchResult', {hits:results.length});
+    Bridge.send('searchIndex', {index:-1});
+  });
+  Bridge.on('searchMove', function(payload) {
+    if (!results.length) return;
+    if (resultIndex < 0 && payload.direction < 0) resultIndex = 0;
+    resultIndex = (resultIndex + (payload.direction < 0 ? -1 : 1) + results.length) % results.length;
+    const result = results[resultIndex];
+    if (currentSheet !== result.sheet) show(result.sheet);
+    highlightCells();
+    const cell = stage.querySelectorAll('td')[result.cell];
+    if (cell) { cell.style.outline = '3px solid #d85b00'; cell.scrollIntoView({block:'center', inline:'center'}); }
+    Bridge.send('searchIndex', {index:resultIndex});
   });
 
   Bridge.start(render);

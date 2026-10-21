@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.02 — 2026-10-21
+
+- Eight reader improvements: Office fit/search, Android incoming files, PDF search, reading positions, library browsing, cancellable imports, memory/loading polish, and release links.
+- New cyan/pink Sara launcher and splash logo, with PNG download.
+- Android build 7; same publisher certificate and application ID for updates.
+- Smaller ARM64/ARMv7 downloads and universal APK retained.
+
+See [v1.02 release notes](release-notes/v1.02.md) for verification and limits.
+
 ## v1.01 — 2026-10-21
 
 - First public GitHub APK release under the Sara PDF Reader name.

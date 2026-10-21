@@ -26,6 +26,10 @@ class DocumentViewController extends ChangeNotifier {
   DocumentInfo? _info;
   DocumentFailure? _failure;
   int _position = 0;
+  double scrollFraction = 0;
+  double horizontalOffset = 0;
+  int searchIndex = -1;
+  Future<void> Function(String, Map<String, Object?>)? _commandHandler;
   int _lastSearchHits = 0;
 
   Future<void> Function(String query)? _searchHandler;
@@ -55,6 +59,16 @@ class DocumentViewController extends ChangeNotifier {
   /// Scrolls to the page, sheet or slide at [index].
   Future<void> goTo(int index) async => _gotoHandler?.call(index);
 
+  Future<void> setViewMode(String mode) async => _commandHandler?.call('viewMode', {'mode': mode});
+  Future<void> moveSearch(int direction) async => _commandHandler?.call('searchMove', {'direction': direction});
+  Future<void> restoreScroll(double fraction, double horizontal) async => _commandHandler?.call('restoreViewport', {'fraction': fraction, 'horizontal': horizontal});
+  void reportViewport(double fraction, double horizontal) {
+    scrollFraction = fraction.clamp(0, 1);
+    horizontalOffset = horizontal;
+    notifyListeners();
+  }
+  void reportSearchIndex(int index) { searchIndex = index; notifyListeners(); }
+
   // ── wiring used by DocumentView ──────────────────────────────────────
 
   /// @nodoc
@@ -62,7 +76,9 @@ class DocumentViewController extends ChangeNotifier {
   void attach({
     required Future<void> Function(String query) onSearch,
     required Future<void> Function(int index) onGoto,
+    Future<void> Function(String, Map<String, Object?>)? onCommand,
   }) {
+    _commandHandler = onCommand;
     _searchHandler = onSearch;
     _gotoHandler = onGoto;
   }
@@ -70,6 +86,7 @@ class DocumentViewController extends ChangeNotifier {
   /// @nodoc
   @internal
   void detach() {
+    _commandHandler = null;
     _searchHandler = null;
     _gotoHandler = null;
   }

@@ -15,6 +15,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = 'charitha-only/sara-pdf-reader'
@@ -66,6 +67,9 @@ def main():
     parser.add_argument('--tag', required=True, help='Visible version, for example v1.01')
     parser.add_argument('--apk', required=True, type=Path)
     parser.add_argument('--notes', required=True, type=Path)
+    parser.add_argument('--variant', action='append', default=[], metavar='ABI=APK',
+                        help='Also verify and publish a smaller APK; repeat for each ABI')
+    parser.add_argument('--logo', type=Path, help='Optional public PNG logo download')
     parser.add_argument('--certificate-sha256', default=PUBLISHER_CERT)
     parser.add_argument('--verify-only', action='store_true')
     args = parser.parse_args()
@@ -100,7 +104,40 @@ def main():
     if 'android.permission.INTERNET' in permissions:
         raise RuntimeError('Reader release unexpectedly requests Internet access.')
     digest = hashlib.sha256(apk.read_bytes()).hexdigest()
-    checksum = f'{digest}  {asset_name}\n'.encode()
+    upload_files = [(asset_name, apk)]
+    checksum_lines = [f'{digest}  {asset_name}\n']
+    seen_abis = set()
+    for variant in args.variant:
+        abi, separator, filename = variant.partition('=')
+        if not separator or abi not in {'arm64-v8a', 'armeabi-v7a', 'x86_64'} or abi in seen_abis:
+            raise RuntimeError('Each --variant must be a unique ABI=APK path.')
+        seen_abis.add(abi)
+        variant_path = Path(filename).resolve()
+        metadata = run(sdk / ('aapt.exe' if os.name == 'nt' else 'aapt'), 'dump', 'badging', variant_path)
+        if ("name='app.pageflow.reader'" not in metadata or f"versionName='{args.tag}'" not in metadata
+                or f"versionCode='{build[1]}'" not in metadata or "application-label:'Sara PDF Reader'" not in metadata):
+            raise RuntimeError('Variant identity/version does not match the universal APK.')
+        cert_output = run(sdk / ('apksigner.bat' if os.name == 'nt' else 'apksigner'), 'verify', '--print-certs', variant_path)
+        if not re.search(r'certificate SHA-256 digest:\s*' + re.escape(args.certificate_sha256), cert_output, re.I):
+            raise RuntimeError('Variant signer differs from the publisher certificate.')
+        run(sdk / ('zipalign.exe' if os.name == 'nt' else 'zipalign'), '-c', '-P', '16', '4', variant_path)
+        variant_permissions = run(sdk / ('aapt.exe' if os.name == 'nt' else 'aapt'), 'dump', 'permissions', variant_path)
+        if 'android.permission.INTERNET' in variant_permissions:
+            raise RuntimeError('Variant unexpectedly requests Internet access.')
+        with zipfile.ZipFile(variant_path) as archive:
+            abis = {name.split('/')[1] for name in archive.namelist() if name.startswith('lib/') and name.endswith('.so')}
+            if abis != {abi}:
+                raise RuntimeError('Variant contains incorrect native-library architectures.')
+        variant_name = f'Sara-PDF-Reader-{args.tag}-{abi}.apk'
+        upload_files.append((variant_name, variant_path))
+        checksum_lines.append(f'{hashlib.sha256(variant_path.read_bytes()).hexdigest()}  {variant_name}\n')
+    if args.logo:
+        logo = args.logo.resolve()
+        if logo.suffix.lower() != '.png' or not logo.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):
+            raise RuntimeError('Logo must be a PNG image.')
+        upload_files.append(('Sara-PDF-Reader-logo.png', logo))
+        checksum_lines.append(f'{hashlib.sha256(logo.read_bytes()).hexdigest()}  Sara-PDF-Reader-logo.png\n')
+    checksum = ''.join(checksum_lines).encode()
     apk.with_name('SHA256SUMS.txt').write_bytes(checksum)
     print(f'Verified {args.tag}, build {build[1]}, signed APK, offline permissions and 16 KB ZIP alignment.')
     if args.verify_only:
@@ -134,10 +171,14 @@ def main():
     notes += f'\n\nAndroid build {build[1]}. APK SHA-256: `{digest}`.\n'
     release = request(api, 'POST', {'tag_name': args.tag, 'target_commitish': commit,
         'name': f'Sara PDF Reader {args.tag}', 'body': notes, 'draft': True, 'prerelease': False})
-    print('Created draft release; uploading APK and checksum.')
+    print('Created draft release; uploading APKs and checksum.')
     upload = release['upload_url'].split('{', 1)[0]
-    request(upload + '?name=' + urllib.parse.quote(asset_name), 'POST', apk.read_bytes(),
-            'application/vnd.android.package-archive')
+    for filename, path in upload_files:
+        uploaded = request(upload + '?name=' + urllib.parse.quote(filename), 'POST', path.read_bytes(),
+                           'image/png' if path.suffix.lower() == '.png' else 'application/vnd.android.package-archive')
+        if uploaded['size'] != path.stat().st_size:
+            raise RuntimeError('Uploaded asset size differs from the local file.')
+        print('Uploaded: ' + filename)
     request(upload + '?name=SHA256SUMS.txt', 'POST', checksum, 'text/plain')
     published = request(api + '/' + str(release['id']), 'PATCH', {'draft': False, 'make_latest': 'true'})
     print('Published: ' + published['html_url'])

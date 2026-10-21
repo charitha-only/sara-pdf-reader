@@ -106,6 +106,7 @@
         }
 
         default: {
+          if (message.type === 'search') { activeHit = -1; toDart('searchIndex', {index:-1}); }
           const handler = handlers[message.type];
           if (handler) {
             try {
@@ -158,6 +159,38 @@
       toDart('ready', {});
     }
   };
+
+
+  // Reader v1.02: shared position reporting and result navigation.
+  let viewportTimer = 0;
+  function viewport() {
+    clearTimeout(viewportTimer);
+    viewportTimer = setTimeout(function () {
+      const stage = document.getElementById('stage');
+      const max = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+      toDart('viewport', {fraction: max ? scrollY / max : 0, horizontal: stage ? stage.scrollLeft : 0});
+    }, 180);
+  }
+  global.addEventListener('scroll', viewport, {passive:true, capture:true});
+  Bridge.on('restoreViewport', function (payload) {
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      const fraction = Math.max(0, Math.min(1, Number(payload.fraction) || 0));
+      scrollTo(0, fraction * Math.max(0, document.documentElement.scrollHeight - innerHeight));
+      const stage = document.getElementById('stage');
+      if (stage) stage.scrollLeft = Math.max(0, Number(payload.horizontal) || 0);
+    }); });
+  });
+  let activeHit = -1;
+  Bridge.on('searchMove', function (payload) {
+    const hits = Array.from(document.querySelectorAll('#stage .hit'));
+    if (!hits.length) return;
+    if (activeHit < 0 && payload.direction < 0) activeHit = 0;
+    activeHit = (activeHit + (payload.direction < 0 ? -1 : 1) + hits.length) % hits.length;
+    hits.forEach(function(node) {node.style.outline = '';});
+    hits[activeHit].style.outline = '3px solid #d85b00';
+    hits[activeHit].scrollIntoView({block:'center', inline:'nearest'});
+    toDart('searchIndex', {index: activeHit});
+  });
 
   global.Bridge = Bridge;
   // Dart tarafı bu adı çağırıyor; adı değiştirmek köprüyü kırar.
