@@ -74,3 +74,7 @@ mark.hit:first-of-type {
   border-top: 1px dashed #c9ccd2;
   margin: 2em 0;
 }
+
+/* Fallback never overrides authored sizes, margins, line spacing or colors. */
+body { font-family: 'Calibri', 'Sara Sinhala', sans-serif; }
+.word-paper img, .docx img { image-rendering: auto; }

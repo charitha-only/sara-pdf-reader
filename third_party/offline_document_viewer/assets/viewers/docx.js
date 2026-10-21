@@ -72,9 +72,17 @@
       useBase64URL: true,
       renderHeaders: true,
       renderFooters: true,
+      renderEndnotes: true,
       renderFootnotes: true
     });
 
+    // Keep the authored font first; add a Sinhala fallback without replacing
+    // the document's Latin font metrics or embedded font faces.
+    stage.querySelectorAll('[style]').forEach(function(node) {
+      if (node.style.fontFamily && !node.style.fontFamily.includes('Sara Sinhala')) {
+        node.style.fontFamily += ', "Sara Sinhala"';
+      }
+    });
     await document.fonts.ready;
     await Promise.all(Array.from(stage.querySelectorAll('img')).map(img => img.decode ? img.decode().catch(() => {}) : Promise.resolve()));
     stage.querySelectorAll('[data-word-vml-box]').forEach(function(box) {

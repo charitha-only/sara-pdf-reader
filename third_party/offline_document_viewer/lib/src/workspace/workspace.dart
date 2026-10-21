@@ -57,7 +57,7 @@ class WorkspaceBuilder {
   /// keeps seeing documents produced by the previous version, which is silent
   /// and very hard to diagnose: the code is fixed, the tests pass, and the
   /// screen still shows the old output.
-  static const int _layoutRevision = 19;
+  static const int _layoutRevision = 20;
 
   /// SheetJS reads `.xls` and `.csv` as well as `.xlsx`, so all three share
   /// one bundle. The style layer simply finds nothing to read in the legacy
@@ -73,6 +73,7 @@ class WorkspaceBuilder {
         'engine/xlsx.full.min.js':
             '$_package/assets/engines/xlsx/xlsx.full.min.js',
         'engine/xlsx-render.js': '$_package/assets/engines/xlsx/xlsx-render.js',
+        'engine/reader-extras.js': '$_package/assets/engines/xlsx/reader-extras.js',
       },
   );
 
@@ -125,6 +126,8 @@ class WorkspaceBuilder {
   /// drift.
   static const List<String> _fonts = <String>[
     'office-fonts.css',
+    'NotoSansSinhala-Regular.ttf',
+    'NotoSansSinhala-Bold.ttf',
     'Carlito-Regular.ttf',
     'Carlito-Bold.ttf',
     'Carlito-Italic.ttf',

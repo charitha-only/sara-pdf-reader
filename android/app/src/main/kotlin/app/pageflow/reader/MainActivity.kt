@@ -123,6 +123,13 @@ class MainActivity : FlutterActivity() {
         incomingBridge = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pageflow_reader/incoming")
         incomingBridge!!.setMethodCallHandler { call, result ->
             when (call.method) {
+                "readerDisplay" -> {
+                    runOnUiThread {
+                        if (call.argument<Boolean>("awake") == true) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        result.success(null)
+                    }
+                }
                 "hasIncoming" -> result.success(incomingLaunch)
                 "takeIncoming" -> {
                     result.success(mapOf("files" to incomingFiles.toList(), "error" to incomingError))
@@ -187,7 +194,7 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pageflow_reader/share")
             .setMethodCallHandler { call, result ->
                 if(call.method == "clearSharedCopies") {
-                    fileExecutor.execute { try { File(cacheDir, "share").deleteRecursively(); File(cacheDir, "odv_workspaces").deleteRecursively(); File(cacheDir, "incoming").deleteRecursively(); runOnUiThread { result.success(null) } } catch(e: Exception) { runOnUiThread { result.error("cleanup_failed", e.message, null) } } }
+                    fileExecutor.execute { try { File(cacheDir, "share").deleteRecursively(); File(cacheDir, "odv_workspaces").deleteRecursively(); File(cacheDir, "incoming").deleteRecursively(); File(cacheDir, "sara-ocr-reader").deleteRecursively(); runOnUiThread { result.success(null) } } catch(e: Exception) { runOnUiThread { result.error("cleanup_failed", e.message, null) } } }
                     return@setMethodCallHandler
                 }
                 val verify = BuildConfig.DEBUG && call.method == "verifyReceiver"

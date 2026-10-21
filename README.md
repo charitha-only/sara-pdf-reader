@@ -1,7 +1,7 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.02** (Android build 7).
-Read PDFs, preview Office documents, read UTF-8 text and view images locally.
+Free, open-source Android document reader built with Flutter. Version **v1.03** (Android build 8).
+Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
 interfaces are disabled by default; their experimental source remains for future work.
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-v1.02-arm64-v8a.apk) | 53.9 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-v1.02-armeabi-v7a.apk) | 47.9 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-v1.02.apk) | 122.9 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.03/Sara-PDF-Reader-v1.03-arm64-v8a.apk) | 56.2 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.03/Sara-PDF-Reader-v1.03-armeabi-v7a.apk) | 50.1 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.03/Sara-PDF-Reader-v1.03.apk) | 125.4 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.02 reader features and offline resources. The
+All three APKs have the same v1.03 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,24 +27,33 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.02**;
-Flutter's internal semantic version is `1.0.2+7`.
+must match. The current release label and Android version name are **v1.03**;
+Flutter's internal semantic version is `1.0.3+8`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.02 improvements
+## v1.03 improvements
 
-Open documents from other Android apps, search Sinhala/English with match navigation, resume Office/text reading positions, browse a persistent library filter, and cancel or retry imports/previews. Office supports fit-width and original-size viewing; workbook search spans sheets. Settings links to the latest release and all version downloads. See [update notes](release-notes/v1.02.md).
+Read EPUB books with chapter navigation and appearance controls; recognize/search/copy scanned PDF text in Sinhala or English; navigate PDF contents and internal links; organize documents with folders/tags; choose full screen, rotation and keep-screen-on behavior. Word adds Sinhala font fallbacks/endnotes; Excel adds common chart and conditional-formatting previews plus cell-address navigation. Existing Android Open with, search, reading positions and GitHub update links remain available. See [update notes](release-notes/v1.03.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.02/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.03/Sara-PDF-Reader-logo.png).
+
+## Reader previews
+
+Synthetic verification documents shown in the signed release:
+
+| Word / Sinhala | Excel charts | EPUB |
+| --- | --- | --- |
+| ![Word preview](docs/screenshots/v1.03-word.png) | ![Excel preview](docs/screenshots/v1.03-excel.png) | ![EPUB preview](docs/screenshots/v1.03-epub.png) |
 
 ## Reading support
 
 | Format | Current support | Important limits |
 | --- | --- | --- |
-| PDF | Native PDFium rendering, zoom, fit width/page, search, bookmarks, thumbnails, sharing | Scans display as images; no universal OCR accuracy guarantee; import up to 256 MB |
-| DOCX / DOCM | Offline pages, text, tables, images, headers/footers | Font substitutions, floating objects and page breaks may differ; macros never run |
-| XLSX / XLSM | Sheets, merges, dimensions, borders, fills, fonts, alignment, saved formula values | 3,000 rows / 200 columns per sheet; charts, pivots and conditional formatting are not rendered; no formula recalculation |
+| PDF | Native PDFium rendering, zoom, fit width/page, search, bookmarks, thumbnails, sharing | Scans display as images; optional read-only Sinhala/English OCR panel; recognition is approximate; import up to 256 MB |
+| EPUB | Native reflowed text/images, chapters, search, appearance, resume | Unencrypted EPUB 2/3 XHTML content; no scripted/multimedia or fixed-layout fidelity; up to 40 MB |
+| DOCX / DOCM | Offline pages, text, tables, images, headers/footers/endnotes, Sinhala fallback fonts | Font substitutions, floating objects and page breaks may differ; macros never run |
+| XLSX / XLSM | Sheets, merges, dimensions, borders, fills, fonts, alignment, saved formula values | 3,000 rows / 200 columns per sheet; basic cached bar/line/pie/doughnut charts and numeric/text/RGB conditional previews; advanced charts, pivots and formula rules unsupported; no recalculation |
 | PPTX / PPTM | Offline slide preview | Complex layouts may differ; no animation or macro execution |
 | DOC | Legacy Word text, styles, tables, inline images and textbox content | Approximate layout; up to 20 MB |
 | XLS | Legacy spreadsheet stored values | Limited formatting |
@@ -64,8 +73,8 @@ with archive size, ratio and entry checks.
 
 Release Android builds request no Internet permission. Reading engines, fonts
 and Sinhala recognition resources are bundled. Documents are copied to private
-app storage; previews are private caches, pruned at 200 MB. Clearing the library
-also clears preview caches. Sharing creates temporary copies with read grants
+app storage; Office previews are private caches, pruned at 200 MB. Recognized text is a private temporary cache. Clearing the library
+also clears Office and OCR preview caches. Sharing creates temporary copies with read grants
 for the selected receiving app. Original selected documents remain unchanged.
 Debug builds can have network access for Flutter development tooling.
 

@@ -62,6 +62,28 @@ String tr(String english) {
 }
 
 const _moreSinhala = <String, String>{
+  'Display options': 'තිර විකල්ප',
+  'Full screen': 'සම්පූර්ණ තිරය',
+  'Keep screen on': 'තිරය සක්‍රියව තබන්න',
+  'Automatic rotation': 'ස්වයංක්‍රීය තිර හැරවීම',
+  'Lock portrait': 'සිරස් දිශාවට අගුළු දමන්න',
+  'Lock landscape': 'තිරස් දිශාවට අගුළු දමන්න',
+  'Book contents': 'පොතේ පටුන',
+  'Find in book': 'පොතේ සොයන්න',
+  'Book appearance': 'පොතේ පෙනුම',
+  'Line spacing': 'පේළි අතර ඉඩ',
+  'Folder and tags': 'ෆෝල්ඩරය සහ ටැග්',
+  'All folders': 'සියලු ෆෝල්ඩර',
+  'Unfiled': 'ෆෝල්ඩරයක් නැති',
+  'Document contents': 'ලේඛන පටුන',
+  'Read / search scanned text': 'ස්කෑන් කළ පෙළ කියවන්න / සොයන්න',
+  'Scanned PDF text': 'ස්කෑන් කළ PDF පෙළ',
+  'Copy recognized text': 'හඳුනාගත් පෙළ පිටපත් කරන්න',
+  'Sinhala + English': 'සිංහල සහ ඉංග්‍රීසි',
+  'Read all pages': 'සියලු පිටු කියවන්න',
+  'Previous chapter': 'පෙර පරිච්ඡේදය',
+  'Next chapter': 'ඊළඟ පරිච්ඡේදය',
+
   'Read Document': 'ගොනුව කියවන්න',
   'Find in document': 'ගොනුව තුළ සොයන්න',
   'Share original file': 'මුල් ගොනුව බෙදාගන්න',

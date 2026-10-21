@@ -41,6 +41,7 @@ class LibraryBackup {
       progress?.check();
       final extension = path.split('.').last.toLowerCase();
       if (![
+        'epub',
         'pdf',
         'docx',
         'xlsx',
@@ -129,7 +130,7 @@ class LibraryBackup {
       final item = Map<String, dynamic>.from(raw), payload = item['payload'];
       if (payload is! String ||
           !RegExp(
-            r'^files/\d+\.(pdf|docx|xlsx|pptx|txt|plain|doc|xls|ppt|rtf|csv|tsv|docm|xlsm|pptm|png|jpg|jpeg|webp|gif|bmp)$',
+            r'^files/\d+\.(pdf|epub|docx|xlsx|pptx|txt|plain|doc|xls|ppt|rtf|csv|tsv|docm|xlsm|pptm|png|jpg|jpeg|webp|gif|bmp)$',
           ).hasMatch(payload) ||
           !seen.add(payload)) {
         throw const FormatException('Invalid backup file path.');
@@ -154,6 +155,10 @@ class LibraryBackup {
           (item['lastPage'] != null && item['lastPage'] is! num) ||
           (item['lastOpenedAt'] != null && item['lastOpenedAt'] is! num) ||
           (item['bookmarks'] != null && item['bookmarks'] is! List) ||
+          (item['folder'] != null && item['folder'] is! String) ||
+          (item['tags'] != null &&
+              (item['tags'] is! List ||
+                  (item['tags'] as List).any((v) => v is! String))) ||
           (item['isFavorite'] != null && item['isFavorite'] is! bool)) {
         throw const FormatException('Invalid reading data in backup.');
       }

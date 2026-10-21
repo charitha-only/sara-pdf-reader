@@ -199,7 +199,14 @@ class OfflineSinhalaOcr {
     return List.unmodifiable(lines);
   }
 
-  static Future<OcrPage> recognize(Uint8List pdfBytes, int pageNumber) async {
+  static Future<OcrPage> recognize(
+    Uint8List pdfBytes,
+    int pageNumber, {
+    String language = 'sin',
+  }) async {
+    if (!['sin', 'eng', 'sin+eng'].contains(language)) {
+      throw ArgumentError('Unsupported OCR language');
+    }
     await pdfrx.pdfrxFlutterInitialize();
     final document = await pdfrx.PdfDocument.openData(pdfBytes);
     pdfrx.PdfImage? image;
@@ -236,8 +243,8 @@ class OfflineSinhalaOcr {
       await imageFile.writeAsBytes(png, flush: true);
       final hocr = await TesseractOcr.extractHocr(
         imageFile.path,
-        config: const OCRConfig(
-          language: 'sin',
+        config: OCRConfig(
+          language: language,
           engine: OCREngine.tesseract,
           options: {
             'preserve_interword_spaces': '1',

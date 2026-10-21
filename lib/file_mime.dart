@@ -1,4 +1,5 @@
 String fileMime(String path) => switch (path.split('.').last.toLowerCase()) {
+  'epub' => 'application/epub+zip',
   'pdf' => 'application/pdf',
   'doc' => 'application/msword',
   'docx' =>

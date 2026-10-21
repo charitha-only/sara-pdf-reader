@@ -65,3 +65,11 @@ are recorded in the release's `SHA256SUMS.txt`. Explain device choices and sizes
 at the top of the release notes and in the README.
 These variants retain the same features and offline resources; no Lite-mode
 feature removal is involved. Existing release downloads remain available.
+
+## Reader regression checks
+
+Run the application and vendored Office Flutter test suites and Android integration scenarios before publishing. The v1.03 scenarios exercise EPUB positions/display settings, PDF contents/internal links, folder/tag persistence and actual raster-page Sinhala/English OCR. Repeat the v1.02 Office/text/search scenarios when changing those engines.
+
+For JavaScript chart/format checks, install `@xmldom/xmldom` into an ignored local test directory, set `NODE_PATH` to that directory's `node_modules`, then run `node test/office_reader_extras.cjs`. This package is test-only and is not shipped in the Android app.
+
+Verify a signed v1.02-to-v1.03 update without uninstalling: preserve document bytes, bookmarks/favorites and reading state. Never clear user data on a connected phone for this check. Record physical-device coverage separately from emulator results.

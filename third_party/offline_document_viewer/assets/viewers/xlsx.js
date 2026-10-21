@@ -28,7 +28,7 @@
   const MIN_SCALE = 0.0001;
 
   function fitToWidth() {
-    const table = stage.querySelector('table.sheet');
+    const table = stage.querySelector('.sheet-content');
     if (!table) {
       return;
     }
@@ -56,7 +56,13 @@
       return;
     }
     currentSheet = index;
-    stage.innerHTML = sheet.html;
+    stage.innerHTML = '<div class="sheet-content">' + sheet.html + '</div>';
+    const table = stage.querySelector('table.sheet');
+    const content = stage.querySelector('.sheet-content');
+    if (table && content) content.style.width = Math.max(table.offsetWidth, sheet.html.includes('reader-chart') ? 640 : 0) + 'px';
+    if (sheet.unsupportedCharts) {
+      const note = document.createElement('p'); note.textContent = 'Some chart types are not supported.'; content.appendChild(note);
+    }
     fitToWidth();
     highlightCells();
     Array.prototype.forEach.call(tabs.children, function (button, i) {
@@ -144,5 +150,18 @@
     Bridge.send('searchIndex', {index:resultIndex});
   });
 
+  const navigation = document.createElement('form');
+  navigation.className = 'cell-navigation';
+  const address = document.createElement('input'); address.placeholder = 'Cell address, e.g. A25'; address.maxLength = 12; address.setAttribute('aria-label','Go to cell');
+  const go = document.createElement('button'); go.type = 'submit'; go.textContent = 'Go';
+  const status = document.createElement('span'); status.setAttribute('role','status');
+  navigation.append(address,go,status); tabs.after(navigation);
+  navigation.addEventListener('submit', function(event) {
+    event.preventDefault(); const ref=address.value.trim().toUpperCase();
+    if(!/^[A-Z]{1,3}[1-9][0-9]{0,5}$/.test(ref)){status.textContent='Enter a cell such as A25.';return;}
+    const cell=stage.querySelector('[data-cell="'+ref+'"]');
+    if(cell){cell.scrollIntoView({block:'center',inline:'center'});cell.style.outline='3px solid #d85b00';status.textContent=ref;}
+    else status.textContent='Cell is empty, merged, or outside the preview limit.';
+  });
   Bridge.start(render);
 })();

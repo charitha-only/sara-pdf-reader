@@ -370,7 +370,16 @@
         ? await parseSheetLayout(zipRef, paths[name])
         : { styleAt: {}, rows: {}, freeze: null, gridlines: true };
 
-      sheets.push(buildTable(ws, layout, styles, opts, name));
+      layout.conditionalCss = isZip && paths[name] && global.ReaderExcelExtras
+        ? await ReaderExcelExtras.conditional(zipRef, paths[name]) : () => '';
+      const sheet = buildTable(ws, layout, styles, opts, name);
+      if (isZip && paths[name] && global.ReaderExcelExtras) {
+        const charts = await ReaderExcelExtras.charts(zipRef, paths[name], wb);
+        sheet.html += charts.html;
+        sheet.unsupportedCharts = charts.unsupported;
+      }
+      if (layout.conditionalCss.hasRules) sheet.html += '<p class="chart-note">Conditional formatting preview: numeric/text rules and RGB scales/bars. Formula rules and some original effects may differ.</p>';
+      sheets.push(sheet);
     }
 
     return {
@@ -432,14 +441,14 @@
           ? (cell.w != null ? cell.w : (cell.v != null ? String(cell.v) : ''))
           : '';
 
-        out.push('<td');
+        out.push('<td data-cell="' + addr + '"');
         if (span) {
           if (span.rowspan > 1) out.push(` rowspan="${span.rowspan}"`);
           if (span.colspan > 1) out.push(` colspan="${span.colspan}"`);
         }
         if (stickyCol) out.push(` class="${stickyCol.trim()}"`);
         if (cell && cell.f) out.push(` title="=${escapeAttr(cell.f)}"`);
-        out.push(` style="${cellCss(xf, isNumber, layout.gridlines)}">`);
+        out.push(` style="${cellCss(xf, isNumber, layout.gridlines) + (layout.conditionalCss ? layout.conditionalCss(addr, cell, ws) : '')}">`);
         out.push(escapeHtml(text));
         out.push('</td>');
       }

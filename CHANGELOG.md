@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.03 — 2026-10-21
+
+- EPUB chapter/text/image reading, book appearance and resume support.
+- Read-only offline Sinhala/English OCR search/copy for scanned PDFs.
+- PDF contents navigation and internal document links.
+- Sinhala Office font fallbacks, Word endnotes, common Excel chart/conditional-format previews and cell navigation.
+- Virtual library folders/tags and persistent folder filtering.
+- Full screen, orientation and keep-screen-on controls across readers.
+- Corrupt-index recovery snapshot, bounded image memory and OCR cache cleanup.
+- Android build 8, retaining signing identity and version-specific downloads.
+
+See [v1.03 release notes](release-notes/v1.03.md) for supported scope and verification.
+
 ## v1.02 — 2026-10-21
 
 - Eight reader improvements: Office fit/search, Android incoming files, PDF search, reading positions, library browsing, cancellable imports, memory/loading polish, and release links.

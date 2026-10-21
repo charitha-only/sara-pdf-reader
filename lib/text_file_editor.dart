@@ -1,3 +1,5 @@
+import 'reader_display.dart';
+
 import 'dart:async';
 
 import 'reading_state.dart';
@@ -104,7 +106,7 @@ class _TextFileEditorState extends State<TextFileEditor> {
           onSubmitted: (v) => Navigator.pop(dialogContext, v),
         ),
         actions: [
-          TextButton(
+            TextButton(
             onPressed: () => Navigator.pop(dialogContext, ''),
             child: const Text('Clear'),
           ),
@@ -233,6 +235,7 @@ class _TextFileEditorState extends State<TextFileEditor> {
             : 'Edit text file',
       ),
       actions: [
+        const ReaderOptionsButton(),
         IconButton(
           tooltip: 'Find in text',
           onPressed: loading || readError != null ? null : searchText,

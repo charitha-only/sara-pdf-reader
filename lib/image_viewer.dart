@@ -1,3 +1,5 @@
+import 'reader_display.dart';
+
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -36,6 +38,7 @@ class ImageFileViewer extends StatelessWidget {
     appBar: AppBar(
       title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
+        const ReaderOptionsButton(),
         IconButton(
           tooltip: 'Share original file',
           icon: const Icon(Icons.ios_share),
@@ -73,6 +76,27 @@ class ImageFileViewer extends StatelessWidget {
           ),
         ),
       ),
+    ),
+  );
+}
+
+class BoundedMemoryImage extends MemoryImage {
+  const BoundedMemoryImage(super.bytes);
+  @override
+  ImageStreamCompleter loadImage(
+    MemoryImage key,
+    ImageDecoderCallback decode,
+  ) => super.loadImage(
+    key,
+    (buffer, {getTargetSize}) => decode(
+      buffer,
+      getTargetSize: (width, height) {
+        final scale = math.min(1.0, math.min(1600 / width, 1600 / height));
+        return ui.TargetImageSize(
+          width: math.max(1, (width * scale).round()),
+          height: math.max(1, (height * scale).round()),
+        );
+      },
     ),
   );
 }

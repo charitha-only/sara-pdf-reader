@@ -1,3 +1,5 @@
+import 'reader_display.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -107,7 +109,7 @@ class _OfficeViewerState extends State<OfficeViewer> {
           onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
         ),
         actions: [
-          TextButton(
+            TextButton(
             onPressed: () => Navigator.pop(dialogContext, ''),
             child: const LocalizedText('Clear'),
           ),
@@ -174,6 +176,7 @@ class _OfficeViewerState extends State<OfficeViewer> {
     appBar: AppBar(
       title: Text(widget.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
+        const ReaderOptionsButton(),
         ListenableBuilder(
           listenable: controller,
           builder: (context, _) => IconButton(

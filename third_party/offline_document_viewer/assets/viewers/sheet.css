@@ -106,3 +106,13 @@ body {
   color: #858c99;
   font-size: 13px;
 }
+
+.cell-navigation { display:flex; gap:8px; padding:6px 10px; flex-wrap:wrap; background:#fff; font:14px sans-serif; }
+.cell-navigation input { max-width:180px; }
+.cell-navigation span { font-size:12px; }
+.sheet-content { transform-origin:top left; width:max-content; }
+.reader-chart { margin:20px 0; padding:12px; width:640px; box-sizing:border-box; background:white; color:#222; }
+.reader-chart svg { width:100%; height:auto; }
+.reader-chart figcaption { font-weight:bold; font-size:18px; }
+.chart-legend { display:flex; flex-wrap:wrap; gap:12px; list-style:none; padding:0; }
+.chart-note { width:600px; padding:10px; background:#fff5d8; }

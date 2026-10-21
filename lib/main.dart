@@ -1,3 +1,8 @@
+import 'epub_document.dart';
+import 'epub_reader.dart';
+import 'reader_display.dart';
+import 'library_index.dart';
+import 'scanned_reader.dart';
 import 'reading_state.dart';
 import 'release_links.dart';
 import 'file_mime.dart';
@@ -62,6 +67,7 @@ const _shareChannel = MethodChannel('pageflow_reader/share');
 
 String _kindForPath(String path) {
   final extension = path.split('.').last.toLowerCase();
+  if (extension == 'epub') return 'EPUB';
   if (['txt', 'plain'].contains(extension)) return 'TXT';
   if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].contains(extension)) {
     return 'Image';
@@ -234,13 +240,21 @@ class PageflowApp extends StatefulWidget {
   State<PageflowApp> createState() => _PageflowAppState();
 }
 
-class _PageflowAppState extends State<PageflowApp> {
+class _PageflowAppState extends State<PageflowApp> with WidgetsBindingObserver {
+  @override
+  void didHaveMemoryPressure() {
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+  }
+
   bool _darkMode = false;
   bool _documentLaunch = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 24 * 1024 * 1024;
     incomingChannel.setMethodCallHandler((call) async {
       if (call.method == 'incomingReady') {
         if (mounted && !_documentLaunch) setState(() => _documentLaunch = true);
@@ -265,6 +279,8 @@ class _PageflowAppState extends State<PageflowApp> {
   @override
   void dispose() {
     AppLanguage.instance.removeListener(_localeChanged);
+    WidgetsBinding.instance.removeObserver(this);
+    incomingChannel.setMethodCallHandler(null);
     super.dispose();
   }
 
@@ -614,6 +630,7 @@ class _HomePageState extends State<HomePage> {
   String _filter = 'All';
   String _query = '';
   String _sortOrder = 'newest';
+  String _folderFilter = '*';
   final Set<String> _selectedPaths = {};
   bool _loadingDocuments = true;
   int _visibleLimit = 50;
@@ -717,19 +734,23 @@ class _HomePageState extends State<HomePage> {
                     'PPT',
                     'TXT',
                     'Image',
+                    'EPUB',
                   ].contains(saved['filter'])
               ? saved['filter'] as String
               : 'All';
           if (supportedSorts.contains(sortOrder)) _sortOrder = sortOrder;
+          _folderFilter = saved['folderFilter'] is String
+              ? saved['folderFilter'] as String
+              : '*';
         }
       }
       final index = File(
         '${directory.path}${Platform.pathSeparator}documents.json',
       );
-      if (await index.exists()) {
-        final decoded = jsonDecode(await index.readAsString()) as List<dynamic>;
+      if (await index.exists() || await File('${index.path}.bak').exists()) {
+        final decoded = await LibraryIndex.read(index);
         final documents = decoded
-            .map((entry) => _Document.fromJson(entry as Map<String, dynamic>))
+            .map((entry) => _Document.fromJson(entry))
             .where(
               (document) =>
                   document.path != null && File(document.path!).existsSync(),
@@ -754,7 +775,7 @@ class _HomePageState extends State<HomePage> {
       await for (final entity in directory.list(followLinks: false)) {
         if (entity is! File ||
             !RegExp(
-              r'\.(pdf|docx|xlsx|pptx|txt|plain|doc|xls|ppt|rtf|csv|tsv|docm|xlsm|pptm|png|jpg|jpeg|webp|gif|bmp)$',
+              r'\.(pdf|epub|docx|xlsx|pptx|txt|plain|doc|xls|ppt|rtf|csv|tsv|docm|xlsm|pptm|png|jpg|jpeg|webp|gif|bmp)$',
               caseSensitive: false,
             ).hasMatch(entity.path)) {
           continue;
@@ -811,7 +832,11 @@ class _HomePageState extends State<HomePage> {
         '${directory.path}${Platform.pathSeparator}library-preferences.json',
       );
       await preferences.writeAsString(
-        jsonEncode({'sortOrder': value, 'filter': _filter}),
+        jsonEncode({
+          'sortOrder': value,
+          'filter': _filter,
+          'folderFilter': _folderFilter,
+        }),
         flush: true,
       );
     } catch (_) {
@@ -828,9 +853,7 @@ class _HomePageState extends State<HomePage> {
       final index = File(
         '${directory.path}${Platform.pathSeparator}documents.json',
       );
-      final temporary = File('${index.path}.tmp');
-      await temporary.writeAsString(snapshot, flush: true);
-      await temporary.rename(index.path);
+      await LibraryIndex.write(index, snapshot);
     });
     // Reading progress and bookmarks can update quickly. Serialize snapshots
     // so an older write never overwrites newer library state.
@@ -878,6 +901,7 @@ class _HomePageState extends State<HomePage> {
           await FilePicker.pickFiles(
             type: FileType.custom,
             allowedExtensions: const [
+              'epub',
               'pdf',
               'docx',
               'xlsx',
@@ -948,7 +972,9 @@ class _HomePageState extends State<HomePage> {
                   .split('.')
                   .last
                   .toLowerCase();
-              final limit = ['txt', 'plain'].contains(extensionCheck)
+              final limit = extensionCheck == 'epub'
+                  ? 40
+                  : ['txt', 'plain'].contains(extensionCheck)
                   ? 8
                   : [
                       'png',
@@ -1048,6 +1074,12 @@ class _HomePageState extends State<HomePage> {
                   codec.dispose();
                 }
                 kind = 'Image';
+              } else if (extension == 'epub') {
+                await compute(
+                  EpubDocument.read,
+                  await copiedFile.readAsBytes(),
+                );
+                kind = 'EPUB';
               } else if (extension == 'txt' || extension == 'plain') {
                 if (await copiedFile.length() > 8 * 1024 * 1024) {
                   throw const FormatException(
@@ -1289,6 +1321,11 @@ class _HomePageState extends State<HomePage> {
               onTap: () => Navigator.pop(sheetContext, 'favorite'),
             ),
             ListTile(
+              leading: const Icon(Icons.folder_outlined),
+              title: const Text('Folder and tags'),
+              onTap: () => Navigator.pop(sheetContext, 'organize'),
+            ),
+            ListTile(
               leading: const Icon(Icons.drive_file_rename_outline),
               title: const LocalizedText('Rename PDF'),
               onTap: () => Navigator.pop(sheetContext, 'rename'),
@@ -1309,6 +1346,8 @@ class _HomePageState extends State<HomePage> {
     );
     if (!mounted || action == null) return;
     switch (action) {
+      case 'organize':
+        await _organizeDocument(document);
       case 'share':
         await _shareDocument(document);
       case 'favorite':
@@ -1404,6 +1443,68 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _organizeDocument(_Document doc) async {
+    var folder = doc.folder, tags = doc.tags.join(', ');
+    final save = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Folder and tags'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              initialValue: folder,
+              maxLength: 80,
+              decoration: const InputDecoration(
+                labelText: 'Folder',
+                hintText: 'Work, Personal, Books…',
+              ),
+              onChanged: (v) => folder = v,
+            ),
+            TextFormField(
+              initialValue: tags,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                labelText: 'Tags, separated by commas',
+              ),
+              onChanged: (v) => tags = v,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (save != true || !mounted) return;
+    final index = _documents.indexWhere((d) => d.path == doc.path);
+    if (index < 0) return;
+    final labels = <String, String>{};
+    for (final tag in tags.split(',')) {
+      final clean = tag.trim();
+      if (clean.isNotEmpty) {
+        labels.putIfAbsent(
+          clean.toLowerCase(),
+          () => clean.substring(0, clean.length.clamp(0, 64)),
+        );
+      }
+    }
+    setState(
+      () => _documents[index] = _documents[index].copyWith(
+        folder: folder.trim(),
+        tags: labels.values.take(30).toList(),
+      ),
+    );
+    await _saveDocuments();
+  }
+
   Future<void> _openPdf(_Document doc) async {
     if (doc.path == null) {
       _message('Import a PDF from your device to open it.');
@@ -1416,11 +1517,24 @@ class _HomePageState extends State<HomePage> {
     _updateReadingProgress(
       doc.copyWith(lastOpenedAt: DateTime.now().millisecondsSinceEpoch),
     );
+    if (doc.kind == 'EPUB') {
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => ReaderFrame(
+            child: EpubReader(path: doc.path!, name: doc.name),
+          ),
+        ),
+      );
+      return;
+    }
     if (doc.kind == 'Image') {
       if (!mounted) return;
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
-          builder: (_) => ImageFileViewer(path: doc.path!, name: doc.name),
+          builder: (_) => ReaderFrame(
+            child: ImageFileViewer(path: doc.path!, name: doc.name),
+          ),
         ),
       );
       return;
@@ -1430,11 +1544,13 @@ class _HomePageState extends State<HomePage> {
       final result = await Navigator.of(context)
           .push<({String path, String name})>(
             MaterialPageRoute(
-              builder: (_) => TextFileEditor(
-                directory: File(doc.path!).parent,
-                path: doc.path,
-                displayName: doc.name,
-                readOnly: !_editingEnabled,
+              builder: (_) => ReaderFrame(
+                child: TextFileEditor(
+                  directory: File(doc.path!).parent,
+                  path: doc.path,
+                  displayName: doc.name,
+                  readOnly: !_editingEnabled,
+                ),
               ),
             ),
           );
@@ -1460,7 +1576,9 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
-          builder: (_) => OfficeViewer(path: doc.path!, name: doc.name),
+          builder: (_) => ReaderFrame(
+            child: OfficeViewer(path: doc.path!, name: doc.name),
+          ),
         ),
       );
       return;
@@ -1469,9 +1587,11 @@ class _HomePageState extends State<HomePage> {
     try {
       final editedDocument = await Navigator.of(context).push<_Document>(
         MaterialPageRoute(
-          builder: (_) => _PdfReaderPage(
-            document: doc,
-            onProgressChanged: _updateReadingProgress,
+          builder: (_) => ReaderFrame(
+            child: _PdfReaderPage(
+              document: doc,
+              onProgressChanged: _updateReadingProgress,
+            ),
           ),
         ),
       );
@@ -1817,6 +1937,21 @@ class _HomePageState extends State<HomePage> {
     final resumeDocument = readingDocuments.isEmpty
         ? null
         : readingDocuments.first;
+    final folderChoices = <String, String>{
+      '*': 'All folders',
+      'folder:': 'Unfiled',
+      for (final f
+          in (_documents
+              .map((d) => d.folder)
+              .where((f) => f.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort()))
+        'folder:$f': f,
+    };
+    final activeFolder = folderChoices.containsKey(_folderFilter)
+        ? _folderFilter
+        : '*';
     final shown =
         _documents
             .where(
@@ -1825,7 +1960,11 @@ class _HomePageState extends State<HomePage> {
                       (_filter == 'Favorites'
                           ? doc.isFavorite
                           : doc.kind == _filter)) &&
-                  doc.name.toLowerCase().contains(_query.toLowerCase()),
+                  (activeFolder == '*' ||
+                      'folder:${doc.folder}' == activeFolder) &&
+                  '${doc.name} ${doc.folder} ${doc.tags.join(' ')}'
+                      .toLowerCase()
+                      .contains(_query.toLowerCase()),
             )
             .toList()
           ..sort((first, second) {
@@ -2011,6 +2150,29 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 22),
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: activeFolder,
+                      items: [
+                        for (final e in folderChoices.entries)
+                          DropdownMenuItem(
+                            value: e.key,
+                            child: Text(
+                              e.value,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _folderFilter = v);
+                        unawaited(_setSortOrder(_sortOrder));
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 13),
                   SizedBox(
                     height: 80,
@@ -2027,6 +2189,7 @@ class _HomePageState extends State<HomePage> {
                                 'PPT',
                                 'TXT',
                                 'Image',
+                                'EPUB',
                               ]
                               .map(
                                 (kind) => _FilterChip(
@@ -2460,7 +2623,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.02',
+            applicationVersion: 'v1.03',
           ),
         ),
         Card(
@@ -2534,7 +2697,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.02',
+            'Sara PDF Reader · v1.03',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -2602,6 +2765,7 @@ class _FilterChip extends StatelessWidget {
       'PPT': Color(0xFFE47B31),
       'TXT': Color(0xFF526D82),
       'Image': Color(0xFF7952A3),
+      'EPUB': Color(0xFF805B35),
       'All': Color(0xFFE5A900),
     };
     final color = colors[kind]!;
@@ -2614,6 +2778,7 @@ class _FilterChip extends StatelessWidget {
       'PPT': 'P',
       'TXT': 'TXT',
       'Image': 'IMG',
+      'EPUB': 'BOOK',
     }[kind]!;
     return GestureDetector(
       onTap: onTap,
@@ -2670,6 +2835,8 @@ class _Document {
     this.lastOpenedAt = 0,
     this.bookmarks = const {},
     this.isFavorite = false,
+    this.folder = '',
+    this.tags = const [],
   });
   final String name, kind, size, date;
   final String? path;
@@ -2677,6 +2844,8 @@ class _Document {
   final int lastOpenedAt;
   final Set<int> bookmarks;
   final bool isFavorite;
+  final String folder;
+  final List<String> tags;
 
   _Document copyWith({
     String? name,
@@ -2685,6 +2854,8 @@ class _Document {
     int? lastOpenedAt,
     Set<int>? bookmarks,
     bool? isFavorite,
+    String? folder,
+    List<String>? tags,
   }) => _Document(
     name ?? this.name,
     kind,
@@ -2695,6 +2866,8 @@ class _Document {
     lastOpenedAt: lastOpenedAt ?? this.lastOpenedAt,
     bookmarks: bookmarks ?? this.bookmarks,
     isFavorite: isFavorite ?? this.isFavorite,
+    folder: folder ?? this.folder,
+    tags: tags ?? this.tags,
   );
 
   Map<String, dynamic> toJson() => {
@@ -2707,6 +2880,8 @@ class _Document {
     'lastOpenedAt': lastOpenedAt,
     'bookmarks': bookmarks.toList()..sort(),
     'isFavorite': isFavorite,
+    'folder': folder,
+    'tags': tags,
   };
 
   factory _Document.fromJson(Map<String, dynamic> json) {
@@ -2725,6 +2900,18 @@ class _Document {
           .where((page) => page > 0)
           .toSet(),
       isFavorite: json['isFavorite'] as bool? ?? false,
+      folder: json['folder'] is String
+          ? (json['folder'] as String).substring(
+              0,
+              (json['folder'] as String).length.clamp(0, 80),
+            )
+          : '',
+      tags: (json['tags'] is List ? json['tags'] as List : const [])
+          .whereType<String>()
+          .where((s) => s.trim().isNotEmpty)
+          .take(30)
+          .map((s) => s.substring(0, s.length.clamp(0, 64)))
+          .toList(),
     );
   }
 }
@@ -2759,6 +2946,7 @@ class _DocumentTile extends StatelessWidget {
           'PPT': 'P',
           'TXT': 'TXT',
           'Image': 'IMG',
+          'EPUB': 'BOOK',
         }[document.kind] ??
         'PDF';
     return InkWell(
@@ -2895,6 +3083,56 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
     }
     _page = _page.clamp(1, document.pages.length).toInt();
     return document;
+  }
+
+  Future<void> _showContents() async {
+    try {
+      final document = await _readerDocument;
+      final roots = await document.loadOutline();
+      final entries = <({pdfrx.PdfOutlineNode node, int depth})>[];
+      void walk(List<pdfrx.PdfOutlineNode> nodes, int depth) {
+        if (depth > 32) return;
+        for (final node in nodes.take(2000)) {
+          if (entries.length >= 5000) return;
+          entries.add((node: node, depth: depth));
+          walk(node.children, depth + 1);
+        }
+      }
+
+      walk(roots, 0);
+      if (!mounted) return;
+      final dest = await showDialog<pdfrx.PdfDest>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Document contents'),
+          content: SizedBox(
+            width: 420,
+            height: 400,
+            child: entries.isEmpty
+                ? const Text(
+                    'This PDF has no document contents. Use page thumbnails or bookmarks.',
+                  )
+                : ListView.builder(
+                    itemCount: entries.length,
+                    itemBuilder: (_, i) {
+                      final e = entries[i];
+                      return ListTile(
+                        contentPadding: EdgeInsets.only(
+                          left: 8 + e.depth * 12.0,
+                        ),
+                        title: Text(e.node.title),
+                        enabled: e.node.dest != null,
+                        onTap: () => Navigator.pop(c, e.node.dest),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      );
+      if (dest != null && mounted) await _controller.goToDest(dest);
+    } catch (error) {
+      _message('Could not load document contents: $error');
+    }
   }
 
   void _fitPage(bool whole) {
@@ -4843,17 +5081,38 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
             onPressed: _textSearcher == null ? null : _searchInPdf,
             icon: const Icon(Icons.search),
           ),
+          const ReaderOptionsButton(),
           PopupMenuButton<String>(
             tooltip: 'Reading options',
             icon: const Icon(Icons.chrome_reader_mode_outlined),
             onSelected: (value) {
-              if (value == 'sepia') {
+              if (value == 'contents') {
+                _showContents();
+              } else if (value == 'scan') {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (_) => ScannedReader(
+                      path: widget.document.path!,
+                      page: _page,
+                      onPage: (p) => _controller.goToPage(pageNumber: p),
+                    ),
+                  ),
+                );
+              } else if (value == 'sepia') {
                 setState(() => _sepia = !_sepia);
               } else {
                 _fitPage(value == 'page');
               }
             },
             itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'contents',
+                child: Text('Document contents'),
+              ),
+              const PopupMenuItem(
+                value: 'scan',
+                child: Text('Read / search scanned text'),
+              ),
               const PopupMenuItem(
                 value: 'width',
                 child: LocalizedText('Fit width'),
@@ -5193,6 +5452,18 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
                         controller: _controller,
                         initialPageNumber: _page,
                         params: pdfrx.PdfViewerParams(
+                          linkHandlerParams: pdfrx.PdfLinkHandlerParams(
+                            onLinkTap: (link) {
+                              if (link.dest != null) {
+                                _controller.goToDest(link.dest);
+                              } else if (link.url != null) {
+                                Clipboard.setData(
+                                  ClipboardData(text: link.url.toString()),
+                                );
+                                _message('External link copied.');
+                              }
+                            },
+                          ),
                           maxImageBytesCachedOnMemory: 32 * 1024 * 1024,
                           pagePaintCallbacks: [
                             if (_textSearcher != null)

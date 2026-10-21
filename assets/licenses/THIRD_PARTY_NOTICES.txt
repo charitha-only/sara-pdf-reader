@@ -40382,3 +40382,11 @@ Copyright 1999-2024 The Apache Software Foundation
 This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/).
 
+
+============================================================
+Official English OCR model (tessdata_fast)
+Source: https://github.com/tesseract-ocr/tessdata_fast
+License: Apache License 2.0 (full Tesseract/model license reproduced above).
+Bundled file: eng.traineddata
+SHA-256: 7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2
+============================================================

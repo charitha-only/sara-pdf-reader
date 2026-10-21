@@ -29,3 +29,10 @@ Sara v1.02 reader changes:
 - Workbook-wide search, active result navigation and cell highlights after sheet changes.
 - Viewport/search index bridge events for reading-position persistence and next/previous controls.
 - Archive preflight runs in an isolate; cancellation unmounts the preview and retry starts a fresh renderer.
+
+Sara v1.03 reader changes (cache revision 20):
+- Bundled Noto Sans Sinhala font fallback aliases preserve Latin metrics and authored embedded fonts; Word endnotes enabled.
+- Original reader-extras.js previews cached bar/line/pie/doughnut data and common conditional formats, with no formula execution.
+- Chart fallback can resolve cached worksheet cell ranges; unsupported chart types are shown explicitly.
+- Workbook cell-address navigation and a shared scaled sheet/chart wrapper.
+- Native image/cache handling remains bounded; fonts keep their original OFL notices.
