@@ -1,3 +1,7 @@
+# v1.05
+
+Manual scan page crop and multi-page PDF capture/export, per-page selection, ordering and deletion.
+
 # v1.04
 
 Camera capture and PNG/JPEG/PDF save/share, scan contrast, Office zoom/pan controls and first-open reader/access guidance. See release-notes/v1.04.md for limits.

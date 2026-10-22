@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.04** (Android build 9).
+Free, open-source Android document reader built with Flutter. Version **v1.05** (Android build 10).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.04/Sara-PDF-Reader-v1.04-arm64-v8a.apk) | 57.9 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.04/Sara-PDF-Reader-v1.04-armeabi-v7a.apk) | 52.1 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.04/Sara-PDF-Reader-v1.04.apk) | 130.8 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.05/Sara-PDF-Reader-v1.05-arm64-v8a.apk) | 57.9 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.05/Sara-PDF-Reader-v1.05-armeabi-v7a.apk) | 52.2 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.05/Sara-PDF-Reader-v1.05.apk) | 130.9 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.04 reader features and offline resources. The
+All three APKs have the same v1.05 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,16 +27,16 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.04**;
-Flutter's internal semantic version is `1.0.4+9`.
+must match. The current release label and Android version name are **v1.05**;
+Flutter's internal semantic version is `1.0.5+10`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.04 improvements
+## v1.05 improvements
 
-Capture photos from the + button and save/share PNG, JPEG or PDF copies with optional scan contrast. Office previews offer explicit zoom levels and touch panning. First-open setup explains Android defaults and file access. Read EPUB books with chapter navigation and appearance controls; recognize/search/copy scanned PDF text in Sinhala or English; navigate PDF contents and internal links; organize documents with folders/tags; choose full screen, rotation and keep-screen-on behavior. Word adds Sinhala font fallbacks/endnotes; Excel adds common chart and conditional-formatting previews plus cell-address navigation. Existing Android Open with, search, reading positions and GitHub update links remain available. See [update notes](release-notes/v1.04.md).
+Capture up to 20 pages from the + button, manually crop/rotate them, change page order or delete a page, then save/share one multi-page PDF. PNG/JPEG exports the selected page. Optional scan contrast improves readability. Office previews offer explicit zoom levels and touch panning. First-open setup explains Android defaults and file access. Read EPUB books with chapter navigation and appearance controls; recognize/search/copy scanned PDF text in Sinhala or English; navigate PDF contents and internal links; organize documents with folders/tags; choose full screen, rotation and keep-screen-on behavior. Word adds Sinhala font fallbacks/endnotes; Excel adds common chart and conditional-formatting previews plus cell-address navigation. Existing Android Open with, search, reading positions and GitHub update links remain available. See [update notes](release-notes/v1.05.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.04/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.05/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 
