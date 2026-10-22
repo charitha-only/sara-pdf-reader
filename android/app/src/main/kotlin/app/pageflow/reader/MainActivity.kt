@@ -87,6 +87,8 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private var cameraResult: MethodChannel.Result? = null
+    private var cameraFile: File? = null
     private var receiverResult: MethodChannel.Result? = null
     private var batchResult: MethodChannel.Result? = null
     private var batchNames: List<String> = emptyList()
@@ -123,6 +125,45 @@ class MainActivity : FlutterActivity() {
         incomingBridge = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pageflow_reader/incoming")
         incomingBridge!!.setMethodCallHandler { call, result ->
             when (call.method) {
+                "capturePhoto" -> {
+                    if (cameraResult != null) { result.error("camera_busy", "Camera is already open.", null); return@setMethodCallHandler }
+                    try {
+                        val folder = File(cacheDir, "camera").apply { mkdirs() }
+                        val file = File.createTempFile("capture-", ".jpg", folder)
+                        cameraFile = file
+                        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+                        val capture = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                            putExtra(android.provider.MediaStore.EXTRA_OUTPUT, uri)
+                            clipData = ClipData.newRawUri("Photo", uri)
+                            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        cameraResult = result
+                        startActivityForResult(capture, 2058)
+                    } catch (error: Exception) {
+                        cameraFile?.delete(); cameraFile = null; cameraResult = null
+                        result.error("camera_unavailable", "Camera could not open. Check that a camera app is installed and camera access is allowed.", null)
+                    }
+                }
+                "removeCameraCopy" -> {
+                    val file = call.argument<String>("path")?.let { File(it).canonicalFile }
+                    if (file != null && file.parentFile == File(cacheDir, "camera").canonicalFile) file.delete()
+                    result.success(null)
+                }
+
+                "readerSetupSeen" -> result.success(getSharedPreferences("reader_setup", MODE_PRIVATE).getBoolean("seen", false))
+                "readerSetupComplete" -> {
+                    getSharedPreferences("reader_setup", MODE_PRIVATE).edit().putBoolean("seen", true).apply()
+                    result.success(null)
+                }
+                "openDefaultSettings" -> {
+                    try {
+                        startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+                        result.success(null)
+                    } catch (error: Exception) {
+                        result.error("settings_unavailable", "Open Android Settings > Apps to manage default readers.", null)
+                    }
+                }
+
                 "readerDisplay" -> {
                     runOnUiThread {
                         if (call.argument<Boolean>("awake") == true) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -240,6 +281,18 @@ class MainActivity : FlutterActivity() {
 
     @Deprecated("Android compatibility activity-result API")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == 2058) {
+            val result = cameraResult; cameraResult = null
+            val file = cameraFile; cameraFile = null
+            if (file != null) {
+                val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+                revokeUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+            if (resultCode == Activity.RESULT_OK && file != null && file.exists() && file.length() > 0) result?.success(file.absolutePath)
+            else { file?.delete(); result?.success(null) }
+            return
+        }
+
         if(requestCode == 2057) {
             val result = receiverResult; receiverResult = null
             if(resultCode == Activity.RESULT_OK) result?.success(data?.getIntExtra("verified", 0)) else result?.error("receiver_failed", data?.getStringExtra("error") ?: "Receiver could not open the files.", null)

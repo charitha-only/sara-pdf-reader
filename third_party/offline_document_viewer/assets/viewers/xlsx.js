@@ -38,7 +38,15 @@
 
     const available = stage.clientWidth;
     const natural = table.scrollWidth;
-    stage.style.overflow = viewMode === 'actual' ? 'auto' : 'hidden';
+    stage.style.overflow = 'auto';
+    const requested = viewMode === 'actual' ? 1 : Number(viewMode);
+    if (requested > 0) {
+      const zoom = Math.max(0.5, Math.min(3, requested));
+      table.style.transform = 'scale(' + zoom + ')';
+      stage.style.height = table.offsetHeight * zoom + 'px';
+      stage.style.minHeight = '60vh';
+      return;
+    }
     if (viewMode === 'actual' || !natural || !available || natural <= available) {
       return;
     }

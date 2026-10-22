@@ -28,7 +28,7 @@
       return;
     }
     const available = document.documentElement.clientWidth;
-    const scale = viewMode === 'actual' ? 1 : Math.min(1, available / pageWidth);
+    const scale = viewMode === 'actual' ? 1 : (Number(viewMode) > 0 ? Math.max(0.5, Math.min(3, Number(viewMode))) : Math.min(1, available / pageWidth));
     wrapper.style.width = pageWidth + 'px';
     const naturalHeight = wrapper.scrollHeight;
     wrapper.style.position = 'absolute';

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -345,6 +346,7 @@ class _DocumentViewState extends State<DocumentView> {
       child: SizedBox.expand(
         child: InAppWebView(
           initialSettings: ViewerBridge.settingsFor(workspace),
+          gestureRecognizers: {Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer())},
           onWebViewCreated: (InAppWebViewController controller) {
             _webView = controller;
             controller.addJavaScriptHandler(

@@ -1,3 +1,4 @@
+import 'camera_capture.dart';
 import 'epub_document.dart';
 import 'epub_reader.dart';
 import 'reader_display.dart';
@@ -644,7 +645,69 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _incomingRevision.addListener(_incomingChanged);
-    _loadDocuments().then((_) => _receiveIncoming());
+    _loadDocuments().then((_) async {
+      await _readerSetup();
+      await _receiveIncoming();
+    });
+  }
+
+  Future<void> _captureDocument() async {
+    final path = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const CameraCapturePage()),
+    );
+    if (path == null) return;
+    try {
+      if (mounted) {
+        await _importPdf(
+          received: [
+            _ImportFile.local(path, path.split(Platform.pathSeparator).last),
+          ],
+        );
+      }
+    } finally {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    }
+  }
+
+  Future<void> _readerSetup() async {
+    if (!Platform.isAndroid || !mounted) return;
+    try {
+      final seen = await incomingChannel.invokeMethod<bool>('readerSetupSeen');
+      if (seen == true || !mounted) return;
+      final settings = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Welcome to Sara PDF Reader'),
+          content: const SingleChildScrollView(
+            child: Text(
+              'Open a PDF from your phone’s Files app, choose Sara PDF Reader, then choose Always if Android offers it. If another reader opens automatically, clear that app’s defaults in Settings first.\n\n'
+              'For documents and images, choose the files you want to open in the Android file picker. When saving a copy, choose its destination and confirm Save. Access is granted to the selected file or location. Your originals stay unchanged.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Continue'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Open app settings'),
+            ),
+          ],
+        ),
+      );
+      if (settings != null) {
+        await incomingChannel.invokeMethod<void>('readerSetupComplete');
+      }
+      if (settings == true) {
+        await incomingChannel.invokeMethod<void>('openDefaultSettings');
+      }
+    } on PlatformException {
+      /* Settings availability varies by phone. */
+    } on MissingPluginException {
+      /* Non-Android tests. */
+    }
   }
 
   void _incomingChanged() {
@@ -1993,7 +2056,8 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: teal,
         foregroundColor: Colors.white,
-        onPressed: _importPdf,
+        onPressed: _captureDocument,
+        tooltip: 'Take photo or scan',
         child: const Icon(Icons.add_rounded, size: 29),
       ),
       body: SafeArea(
@@ -2100,7 +2164,7 @@ class _HomePageState extends State<HomePage> {
                             onTap: _createTextDocument,
                           ),
                         const SizedBox(width: 9),
-                        _RoundIcon(icon: Icons.add, onTap: _importPdf),
+                        _RoundIcon(icon: Icons.folder_open, onTap: _importPdf),
                         const SizedBox(width: 9),
                         _RoundIcon(
                           icon: Icons.settings_outlined,
@@ -2623,7 +2687,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.03',
+            applicationVersion: 'v1.04',
           ),
         ),
         Card(
@@ -2697,7 +2761,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.03',
+            'Sara PDF Reader · v1.04',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,

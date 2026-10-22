@@ -24,7 +24,7 @@ class _OfficeViewerState extends State<OfficeViewer> {
   Timer? saveTimer;
   int generation = 0;
   bool cancelled = false, restored = false;
-  String mode = 'width', query = '';
+  String mode = 'actual', query = '';
   @override
   void initState() {
     super.initState();
@@ -59,7 +59,8 @@ class _OfficeViewerState extends State<OfficeViewer> {
   Future<void> restore(DocumentInfo info) async {
     final saved = await savedState;
     if (!mounted || restored) return;
-    mode = saved['mode'] == 'actual' ? 'actual' : 'width';
+    const modes = {'width', 'actual', '0.5', '0.75', '1.25', '1.5', '2', '3'};
+    mode = modes.contains(saved['mode']) ? saved['mode'] as String : 'actual';
     await controller.setViewMode(mode);
     final unit = ((saved['unit'] as num?)?.toInt() ?? 0).clamp(
       0,
@@ -109,7 +110,7 @@ class _OfficeViewerState extends State<OfficeViewer> {
           onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
         ),
         actions: [
-            TextButton(
+          TextButton(
             onPressed: () => Navigator.pop(dialogContext, ''),
             child: const LocalizedText('Clear'),
           ),
@@ -198,6 +199,12 @@ class _OfficeViewerState extends State<OfficeViewer> {
           itemBuilder: (_) => const [
             PopupMenuItem(value: 'width', child: Text('Fit width')),
             PopupMenuItem(value: 'actual', child: Text('Original size (100%)')),
+            PopupMenuItem(value: '0.5', child: Text('50%')),
+            PopupMenuItem(value: '0.75', child: Text('75%')),
+            PopupMenuItem(value: '1.25', child: Text('125%')),
+            PopupMenuItem(value: '1.5', child: Text('150%')),
+            PopupMenuItem(value: '2', child: Text('200%')),
+            PopupMenuItem(value: '3', child: Text('300%')),
           ],
           icon: const Icon(Icons.fit_screen),
         ),

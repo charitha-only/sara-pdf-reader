@@ -18,7 +18,19 @@ class ReadingStateStore {
       'unit': number('unit', 200000).toInt(),
       'scroll': number('scroll', 1),
       'horizontal': number('horizontal', 10000000),
-      'mode': value['mode'] == 'actual' ? 'actual' : 'width',
+      'mode':
+          const {
+            'actual',
+            'width',
+            '0.5',
+            '0.75',
+            '1.25',
+            '1.5',
+            '2',
+            '3',
+          }.contains(value['mode'])
+          ? value['mode']
+          : 'width',
     };
   }
 

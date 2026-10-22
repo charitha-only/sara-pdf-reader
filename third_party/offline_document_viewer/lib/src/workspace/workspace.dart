@@ -57,7 +57,7 @@ class WorkspaceBuilder {
   /// keeps seeing documents produced by the previous version, which is silent
   /// and very hard to diagnose: the code is fixed, the tests pass, and the
   /// screen still shows the old output.
-  static const int _layoutRevision = 20;
+  static const int _layoutRevision = 21;
 
   /// SheetJS reads `.xls` and `.csv` as well as `.xlsx`, so all three share
   /// one bundle. The style layer simply finds nothing to read in the legacy
