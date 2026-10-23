@@ -1,3 +1,14 @@
+import 'dart:typed_data' show BytesBuilder;
+
+import 'sinhala_ocr.dart';
+
+import 'dart:async';
+
+import 'scan_draft.dart';
+import 'scan_corners.dart';
+import 'scan_geometry.dart';
+import 'scan_searchable.dart';
+import 'task_progress.dart';
 import 'scan_crop.dart';
 
 import 'dart:io';
@@ -107,7 +118,14 @@ class _ScanPage {
 }
 
 class CameraCapturePage extends StatefulWidget {
-  const CameraCapturePage({super.key});
+  const CameraCapturePage({
+    super.key,
+    this.autoCapture = true,
+    this.galleryOnOpen = false,
+    this.store,
+  });
+  final bool autoCapture, galleryOnOpen;
+  final ScanDraftStore? store;
   @override
   State<CameraCapturePage> createState() => _CameraCapturePageState();
 }
@@ -130,15 +148,270 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
   }
 
   String format = 'pdf', status = '';
-  bool busy = false;
+  bool busy = false,
+      draftFault = false,
+      draftSaved = false,
+      draftSaving = false,
+      searchable = false,
+      ocrActive = false;
+  String ocrLanguage = 'sin+eng';
+  ScanDraftStore? draftStore;
+  int saveRevision = 0;
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => capture());
+    WidgetsBinding.instance.addPostFrameCallback((_) => startSession());
+  }
+
+  Future<void> startSession() async {
+    setState(() => busy = true);
+    try {
+      if (widget.store != null) {
+        draftStore = widget.store;
+      } else {
+        final root = await getApplicationSupportDirectory();
+        draftStore = ScanDraftStore(Directory('${root.path}/scan-draft-v1'));
+      }
+      final restored = await draftStore!.load();
+      if (!mounted) return;
+      if (restored != null) {
+        for (final record in restored['pages'] as List) {
+          final page = _ScanPage(
+            record['original'] as Uint8List,
+            record['preview'] as Uint8List,
+          );
+          page.turns = record['turns'] as int;
+          page.scan = record['scan'] as bool;
+          pages.add(page);
+        }
+        selected = (restored['selected'] as int).clamp(
+          0,
+          pages.isEmpty ? 0 : pages.length - 1,
+        );
+        draftSaved = true;
+        if (pages.isNotEmpty) status = 'Restored your saved scan draft.';
+      } else if (await File('${draftStore!.root.path}/draft.json').exists() ||
+          await File('${draftStore!.root.path}/draft.json.bak').exists()) {
+        draftFault = true;
+        status = 'The saved draft could not be restored. Use New scan to start again.';
+      }
+    } catch (_) {
+      draftStore = null;
+      status = 'Automatic draft storage is unavailable. Export a copy before leaving.';
+    }
+    if (!mounted) return;
+    setState(() => busy = false);
+    if (widget.galleryOnOpen && !draftFault) {
+      await importGallery();
+    } else if (widget.autoCapture && pages.isEmpty && !draftFault) {
+      await capture();
+    }
+  }
+
+  List<Map<String, dynamic>> draftSnapshot() => [
+    for (final page in pages)
+      {
+        'original': page.original,
+        'preview': page.preview,
+        'turns': page.turns,
+        'scan': page.scan,
+      },
+  ];
+  Future<void> saveDraft() async {
+    if (draftStore == null || draftFault) return;
+    final revision = ++saveRevision;
+    if (mounted) {
+      setState(() {
+        draftSaving = true;
+        draftSaved = false;
+      });
+    }
+    try {
+      await draftStore!.save(draftSnapshot(), selected);
+      if (mounted && revision == saveRevision) {
+        setState(() {
+          draftSaving = false;
+          draftSaved = true;
+        });
+      }
+    } catch (_) {
+      if (mounted && revision == saveRevision) {
+        setState(() {
+          draftSaving = false;
+          draftSaved = false;
+          status = 'Draft could not be saved. Export a copy before leaving.';
+        });
+      }
+    }
+  }
+
+  void change(VoidCallback mutation) {
+    setState(mutation);
+    unawaited(saveDraft());
+  }
+
+  bool appendPhoto(Uint8List bytes) {
+    final total = pages.fold<int>(
+      0,
+      (sum, p) => sum + p.original.length + p.preview.length,
+    );
+    if (pages.length >= 20 || total + bytes.length * 2 > 60 * 1024 * 1024) {
+      status = 'Scan limit reached. Save this scan before adding more pages.';
+      return false;
+    }
+    pages.add(_ScanPage(bytes, bytes));
+    selected = pages.length - 1;
+    return true;
+  }
+
+  Future<void> importGallery() async {
+    if (busy || draftFault) return;
+    setState(() => busy = true);
+    try {
+      final selection = await FilePicker.pickFiles(type: FileType.image);
+      if (selection.isEmpty || !mounted) return;
+      if (selection.length > 20 - pages.length) {
+        throw StateError('Choose at most ${20 - pages.length} more photos.');
+      }
+      var imported = 0, skipped = 0;
+      for (final file in selection) {
+        if (!mounted) return;
+        try {
+          final length = await file.length();
+          if (length != null && length > 40 * 1024 * 1024) {
+            throw StateError('Photo too large');
+          }
+          final builder = BytesBuilder();
+          await for (final chunk in file.readAsByteStream()) {
+            if (builder.length + chunk.length > 40 * 1024 * 1024) {
+              throw StateError('Photo too large');
+            }
+            builder.add(chunk);
+          }
+          final bytes = builder.takeBytes();
+          final normalized = await compute(convertCapture, {
+            'bytes': bytes,
+            'format': 'jpeg',
+            'turns': 0,
+            'scan': false,
+          });
+          if (!mounted) return;
+          var added = false;
+          setState(() => added = appendPhoto(normalized));
+          if (!added) break;
+          imported++;
+          await saveDraft();
+        } catch (_) {
+          skipped++;
+        }
+      }
+      if (mounted) {
+        setState(
+          () => status =
+              'Imported $imported photo(s).${skipped > 0 ? ' $skipped unsupported/oversize photo(s) skipped.' : ''}',
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => status = 'Could not import photos: $e');
+    } finally {
+      if (mounted) {
+        setState(() => busy = false);
+        unawaited(saveDraft());
+      }
+    }
+  }
+
+  Future<void> newScan() async {
+    if (busy) return;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Start a new scan?'),
+        content: const Text(
+          'This removes the saved scan draft. Exported files stay available.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep draft'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('New scan'),
+          ),
+        ],
+      ),
+    );
+    if (discard != true || !mounted) return;
+    setState(() => busy = true);
+    try {
+      await draftStore?.clear();
+      if (mounted) {
+        setState(() {
+          pages.clear();
+          selected = 0;
+          draftFault = false;
+          draftSaved = false;
+          status = 'New scan. Add camera pages or choose Gallery.';
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => status = 'Could not clear draft: $e');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  Future<void> straighten() async {
+    if (busy || original == null) return;
+    setState(() => busy = true);
+    try {
+      final base = await compute(convertCapture, {
+        'bytes': original!,
+        'format': 'jpeg',
+        'turns': turns,
+        'scan': false,
+      });
+      if (!mounted) return;
+      final corners = await Navigator.of(context).push<List<double>>(
+        MaterialPageRoute(builder: (_) => ScanCornersPage(bytes: base)),
+      );
+      if (corners == null || !mounted) return;
+      final bytes = await compute(rectifyScan, {
+        'bytes': base,
+        'corners': corners,
+      });
+      final display = await compute(convertCapture, {
+        'bytes': bytes,
+        'format': 'jpeg',
+        'turns': 0,
+        'scan': scan,
+      });
+      if (mounted) {
+        setState(() {
+          current!.original = bytes;
+          current!.preview = display;
+          turns = 0;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => status = 'Could not straighten page: $e');
+    } finally {
+      if (mounted) {
+        setState(() => busy = false);
+        unawaited(saveDraft());
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    if (ocrActive) unawaited(OfflineSinhalaOcr.cancel());
+    super.dispose();
   }
 
   Future<void> capture() async {
-    if (busy) return;
+    if (busy || draftFault) return;
     if (pages.length >= 20) {
       setState(() => status = 'Maximum 20 pages per scan.');
       return;
@@ -176,16 +449,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       });
       if (mounted) {
         setState(() {
-          final total = pages.fold<int>(
-            0,
-            (sum, p) => sum + p.original.length + p.preview.length,
-          );
-          if (total + display.length * 2 > 60 * 1024 * 1024) {
-            status = 'Scan memory limit reached. Save this scan first.';
-            return;
-          }
-          pages.add(_ScanPage(display, display));
-          selected = pages.length - 1;
+          appendPhoto(display);
         });
       }
     } catch (e) {
@@ -198,7 +462,10 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
           /* Temporary cache can be cleared later. */
         }
       }
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+        unawaited(saveDraft());
+      }
     }
   }
 
@@ -216,7 +483,10 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     } catch (e) {
       if (mounted) setState(() => status = '$e');
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+        unawaited(saveDraft());
+      }
     }
   }
 
@@ -258,7 +528,10 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     } catch (e) {
       if (mounted) setState(() => status = 'Could not crop: $e');
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+        unawaited(saveDraft());
+      }
     }
   }
 
@@ -269,7 +542,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       status = '';
     });
     try {
-      final bytes = format == 'pdf'
+      var bytes = format == 'pdf'
           ? await compute(scanPagesPdf, pages.map((p) => p.preview).toList())
           : await compute(convertCapture, {
               'bytes': preview!,
@@ -277,6 +550,24 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
               'turns': 0,
               'scan': false,
             });
+      if (!mounted) return;
+      if (format == 'pdf' && searchable) {
+        ocrActive = true;
+        try {
+          bytes = await runPdfTask(
+            context,
+            'Creating searchable PDF',
+            (progress) => searchableScanPdf(
+              pages.map((p) => p.preview).toList(),
+              bytes,
+              progress,
+              language: ocrLanguage,
+            ),
+          );
+        } finally {
+          ocrActive = false;
+        }
+      }
       if (!mounted) return;
       final name = 'Sara-${DateTime.now().millisecondsSinceEpoch}.$format';
       final mime = format == 'pdf' ? 'application/pdf' : 'image/$format';
@@ -316,13 +607,35 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     } catch (e) {
       if (mounted) setState(() => status = 'Could not export: $e');
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+        unawaited(saveDraft());
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Camera / scan')),
+    appBar: AppBar(
+      title: const Text('Camera / scan'),
+      actions: [
+        IconButton(
+          tooltip: 'Gallery photos',
+          onPressed: busy ? null : importGallery,
+          icon: const Icon(Icons.photo_library),
+        ),
+        IconButton(
+          tooltip: 'Save scan',
+          onPressed: busy || original == null ? null : () => output('save'),
+          icon: const Icon(Icons.save_alt),
+        ),
+        IconButton(
+          tooltip: 'New scan',
+          onPressed: busy ? null : newScan,
+          icon: const Icon(Icons.note_add),
+        ),
+      ],
+    ),
     body: LayoutBuilder(
       builder: (context, constraints) => Column(
         children: [
@@ -341,7 +654,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                         selected: selected == index,
                         onSelected: busy
                             ? null
-                            : (_) => setState(() => selected = index),
+                            : (_) => change(() => selected = index),
                       ),
                     ),
                 ],
@@ -352,6 +665,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                 ? const Center(child: Text('Take a photo to get started.'))
                 : LayoutBuilder(
                     builder: (_, size) => InteractiveViewer(
+                      key: ValueKey(preview),
                       minScale: .5,
                       maxScale: 6,
                       child: SizedBox(
@@ -399,7 +713,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                           tooltip: 'Move page earlier',
                           onPressed: busy || selected == 0 || current == null
                               ? null
-                              : () => setState(() {
+                              : () => change(() {
                                   final page = pages.removeAt(selected);
                                   selected--;
                                   pages.insert(selected, page);
@@ -413,7 +727,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                                   selected >= pages.length - 1 ||
                                   current == null
                               ? null
-                              : () => setState(() {
+                              : () => change(() {
                                   final page = pages.removeAt(selected);
                                   selected++;
                                   pages.insert(selected, page);
@@ -424,7 +738,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                           tooltip: 'Delete selected page',
                           onPressed: busy || current == null
                               ? null
-                              : () => setState(() {
+                              : () => change(() {
                                   pages.removeAt(selected);
                                   selected = selected.clamp(
                                     0,
@@ -432,6 +746,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                                   );
                                 }),
                           icon: const Icon(Icons.delete_outline),
+                        ),
+                        TextButton.icon(
+                          onPressed: busy || original == null
+                              ? null
+                              : straighten,
+                          icon: const Icon(Icons.document_scanner),
+                          label: const Text('Auto crop / straighten'),
                         ),
                         FilterChip(
                           label: const Text('Scan contrast'),
@@ -483,8 +804,47 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                         ),
                       ],
                     ),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      children: [
+                        FilterChip(
+                          label: const Text('Searchable PDF (OCR)'),
+                          selected: searchable,
+                          onSelected: busy || format != 'pdf'
+                              ? null
+                              : (value) => setState(() => searchable = value),
+                        ),
+                        DropdownButton<String>(
+                          value: ocrLanguage,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'sin+eng',
+                              child: Text('Sinhala + English'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'sin',
+                              child: Text('Sinhala'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'eng',
+                              child: Text('English'),
+                            ),
+                          ],
+                          onChanged: busy
+                              ? null
+                              : (value) => setState(() => ocrLanguage = value!),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      draftSaving
+                          ? 'Saving draft…'
+                          : draftSaved
+                          ? 'Draft saved on this device'
+                          : 'Draft not saved yet',
+                    ),
                     const Text(
-                      'PDF includes all pages in order. PNG/JPEG exports the selected page. Crop is manual.',
+                      'PDF includes all pages in order. PNG/JPEG exports the selected page. Review detected corners and OCR text.',
                       style: TextStyle(fontSize: 11),
                     ),
                   ],

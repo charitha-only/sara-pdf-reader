@@ -15,31 +15,18 @@
      edilemez. Ölçek düzeni bozmuyor, yalnızca küçültüyor; kullanıcı
      yakınlaştırma jestiyle büyütebiliyor. */
   function fitToWidth() {
-    const page = stage.querySelector('.docx-wrapper > section');
-    if (!page) {
-      return;
-    }
     const wrapper = stage.querySelector('.docx-wrapper');
-    wrapper.style.transform = '';
-    wrapper.style.height = '';
-    wrapper.style.width = '';
-    const pageWidth = Math.max.apply(null, Array.from(stage.querySelectorAll('.docx-wrapper > section')).map(p => p.offsetWidth));
-    if (!pageWidth) {
-      return;
-    }
+    const pages = Array.from(stage.querySelectorAll('.docx-wrapper > section'));
+    if (!wrapper || !pages.length) return;
+    wrapper.style.transform = ''; wrapper.style.position = ''; wrapper.style.height = ''; wrapper.style.zoom = '1';
+    stage.style.height = ''; wrapper.style.width = '';
+    const natural = Math.max.apply(null, pages.map(function(page) { return page.offsetWidth; }));
+    if (!natural) return;
     const available = document.documentElement.clientWidth;
-    const scale = viewMode === 'actual' ? 1 : (Number(viewMode) > 0 ? Math.max(0.5, Math.min(3, Number(viewMode))) : Math.min(1, available / pageWidth));
-    wrapper.style.width = pageWidth + 'px';
-    const naturalHeight = wrapper.scrollHeight;
-    wrapper.style.position = 'absolute';
-    wrapper.style.left = '0';
-    wrapper.style.top = '0';
-    stage.style.position = 'relative';
-    stage.style.height = naturalHeight * scale + 'px';
-    wrapper.style.transformOrigin = 'top left';
-    wrapper.style.transform = 'scale(' + scale + ')';
-    // Ölçeklenen eleman düzen yüksekliğini korur; kapsayıcıyı da küçültüyoruz
-    // ki altta boşluk kalmasın.
+    const scale = viewMode === 'actual' ? 1 : Number(viewMode) > 0 ? Math.max(.5, Math.min(3, Number(viewMode))) : Math.min(1, available / natural);
+    wrapper.style.width = natural + 'px'; wrapper.style.zoom = String(scale);
+    stage.style.height = Math.ceil(wrapper.getBoundingClientRect().height) + 'px';
+    stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';
   }
   window.addEventListener('resize', fitToWidth);
 

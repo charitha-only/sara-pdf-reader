@@ -172,8 +172,27 @@ class _OfficeViewerState extends State<OfficeViewer> {
       ),
     ),
   );
+  Future<void> chooseScale(String value) async {
+    setState(() => mode = value);
+    try {
+      await controller.setViewMode(value);
+      save();
+    } catch (error) {
+      message('Could not change zoom: $error');
+    }
+  }
+
+  void zoomStep(int step) {
+    const levels = ['0.5', '0.75', 'actual', '1.25', '1.5', '2', '3'];
+    final index = levels.indexOf(mode);
+    chooseScale(
+      levels[((index < 0 ? 2 : index) + step).clamp(0, levels.length - 1)],
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
+    resizeToAvoidBottomInset: false,
     appBar: AppBar(
       title: Text(widget.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
@@ -217,6 +236,43 @@ class _OfficeViewerState extends State<OfficeViewer> {
     ),
     body: Column(
       children: [
+        ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) {
+            final ready = controller.status == DocumentViewStatus.ready;
+            return Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                IconButton(
+                  tooltip: 'Zoom out',
+                  onPressed: ready ? () => zoomStep(-1) : null,
+                  icon: const Icon(Icons.zoom_out),
+                ),
+                Text(
+                  mode == 'width'
+                      ? 'Fit width'
+                      : mode == 'actual'
+                      ? '100%'
+                      : '${((double.tryParse(mode) ?? 1) * 100).round()}%',
+                ),
+                IconButton(
+                  tooltip: 'Zoom in',
+                  onPressed: ready ? () => zoomStep(1) : null,
+                  icon: const Icon(Icons.zoom_in),
+                ),
+                TextButton(
+                  onPressed: ready ? () => chooseScale('width') : null,
+                  child: const Text('Fit width'),
+                ),
+                TextButton(
+                  onPressed: ready ? () => chooseScale('actual') : null,
+                  child: const Text('100%'),
+                ),
+              ],
+            );
+          },
+        ),
         ListenableBuilder(
           listenable: controller,
           builder: (context, _) {

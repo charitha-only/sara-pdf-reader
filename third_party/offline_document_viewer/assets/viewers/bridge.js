@@ -168,7 +168,7 @@
     viewportTimer = setTimeout(function () {
       const stage = document.getElementById('stage');
       const max = Math.max(0, document.documentElement.scrollHeight - innerHeight);
-      toDart('viewport', {fraction: max ? scrollY / max : 0, horizontal: stage ? stage.scrollLeft : 0});
+      toDart('viewport', {fraction: max ? scrollY / max : 0, horizontal: (stage ? stage.scrollLeft : 0) + (global.scrollX || 0)});
     }, 180);
   }
   global.addEventListener('scroll', viewport, {passive:true, capture:true});
@@ -177,7 +177,9 @@
       const fraction = Math.max(0, Math.min(1, Number(payload.fraction) || 0));
       scrollTo(0, fraction * Math.max(0, document.documentElement.scrollHeight - innerHeight));
       const stage = document.getElementById('stage');
-      if (stage) stage.scrollLeft = Math.max(0, Number(payload.horizontal) || 0);
+      const horizontal = Math.max(0, Number(payload.horizontal) || 0);
+      if (stage && getComputedStyle(stage).overflowX !== 'visible' && stage.scrollWidth > stage.clientWidth) stage.scrollLeft = horizontal;
+      else scrollTo(horizontal, scrollY);
     }); });
   });
   let activeHit = -1;

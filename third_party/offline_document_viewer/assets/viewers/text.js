@@ -15,20 +15,13 @@
   /* PAGEFLOW PATCH: fit legacy Word paper without altering table widths. */
   function fitLegacy() {
     const paper = stage.querySelector('.word-paper');
-    if (!paper) { stage.style.zoom = viewMode === 'actual' || viewMode === 'width' ? '1' : String(Math.max(0.5, Math.min(3, Number(viewMode) || 1))); return; }
+    if (!paper) { stage.style.zoom = viewMode === 'actual' || viewMode === 'width' ? '1' : String(Math.max(.5, Math.min(3, Number(viewMode) || 1))); return; }
     const content = paper.querySelector('[data-word-content]');
-    if (content) {
-      if (content.dataset.pageWidth) paper.style.width = content.dataset.pageWidth + 'px';
-    }
-    paper.style.transform = '';
-    stage.style.height = '';
-    const scale = viewMode === 'actual' ? 1 : (Number(viewMode) > 0 ? Math.max(0.5, Math.min(3, Number(viewMode))) : Math.min(1, document.documentElement.clientWidth / paper.offsetWidth));
-    stage.style.height = paper.offsetHeight * scale + 'px';
-    stage.style.position = 'relative';
-    paper.style.position = 'absolute';
-    paper.style.top = '0';
-    paper.style.left = '0';
-    paper.style.transform = 'scale(' + scale + ')';
+    if (content && content.dataset.pageWidth) paper.style.width = content.dataset.pageWidth + 'px';
+    paper.style.transform = ''; paper.style.position = ''; paper.style.zoom = '1'; stage.style.height = '';
+    const scale = viewMode === 'actual' ? 1 : Number(viewMode) > 0 ? Math.max(.5, Math.min(3, Number(viewMode))) : Math.min(1, document.documentElement.clientWidth / paper.offsetWidth);
+    paper.style.zoom = String(scale); stage.style.height = Math.ceil(paper.getBoundingClientRect().height) + 'px';
+    stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';
   }
   fitLegacy();
   document.fonts.ready.then(fitLegacy);

@@ -13,6 +13,7 @@
   const tabs = document.getElementById('tabs');
   let sheets = [];
   let currentSheet = 0;
+  let fullSheet = false;
   let viewMode = 'width';
   Bridge.on('viewMode', function(payload) { viewMode = payload.mode; fitToWidth(); });
 
@@ -28,34 +29,16 @@
   const MIN_SCALE = 0.0001;
 
   function fitToWidth() {
-    const table = stage.querySelector('.sheet-content');
-    if (!table) {
-      return;
-    }
-    table.style.transform = '';
-    table.style.transformOrigin = 'top left';
-    stage.style.height = '';
-
-    const available = stage.clientWidth;
-    const natural = table.scrollWidth;
-    stage.style.overflow = 'auto';
+    const content = stage.querySelector('.sheet-content');
+    if (!content) return;
+    content.style.transform = ''; content.style.zoom = '1'; stage.style.height = '';
+    const available = stage.clientWidth, natural = content.scrollWidth;
+    if (!available || !natural) return;
     const requested = viewMode === 'actual' ? 1 : Number(viewMode);
-    if (requested > 0) {
-      const zoom = Math.max(0.5, Math.min(3, requested));
-      table.style.transform = 'scale(' + zoom + ')';
-      stage.style.height = table.offsetHeight * zoom + 'px';
-      stage.style.minHeight = '60vh';
-      return;
-    }
-    if (viewMode === 'actual' || !natural || !available || natural <= available) {
-      return;
-    }
-
-    const scale = Math.max(MIN_SCALE, available / natural);
-    table.style.transform = 'scale(' + scale + ')';
-    // A transformed element keeps its layout box, so the container would
-    // otherwise reserve the unscaled height.
-    stage.style.height = table.offsetHeight * scale + 'px';
+    const scale = requested > 0 ? Math.max(.5, Math.min(3, requested)) : Math.min(1, available / natural);
+    content.style.zoom = String(scale);
+    stage.style.height = Math.ceil(content.getBoundingClientRect().height) + 'px';
+    stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';
   }
 
   function show(index) {
@@ -64,7 +47,9 @@
       return;
     }
     currentSheet = index;
-    stage.innerHTML = '<div class="sheet-content">' + sheet.html + '</div>';
+    stage.innerHTML = '<div class="sheet-content">' + (!fullSheet && sheet.printHtml ? sheet.printHtml : sheet.html) + '</div>';
+    rangeToggle.hidden = !sheet.printHtml;
+    rangeToggle.textContent = fullSheet ? 'Show print range (' + sheet.printArea + ')' : 'Show full sheet';
     const table = stage.querySelector('table.sheet');
     const content = stage.querySelector('.sheet-content');
     if (table && content) content.style.width = Math.max(table.offsetWidth, sheet.html.includes('reader-chart') ? 640 : 0) + 'px';
@@ -135,6 +120,7 @@
   }
   Bridge.on('search', function(payload) {
     searchQuery = (payload.query || '').toLowerCase();
+    if (searchQuery && !fullSheet) { fullSheet = true; show(currentSheet); }
     results = []; resultIndex = -1;
     if (searchQuery) sheets.forEach(function(sheet, sheetIndex) {
       const template = document.createElement('template'); template.innerHTML = sheet.html;
@@ -151,22 +137,25 @@
     if (resultIndex < 0 && payload.direction < 0) resultIndex = 0;
     resultIndex = (resultIndex + (payload.direction < 0 ? -1 : 1) + results.length) % results.length;
     const result = results[resultIndex];
-    if (currentSheet !== result.sheet) show(result.sheet);
+    if (currentSheet !== result.sheet || !fullSheet) { fullSheet = true; show(result.sheet); }
     highlightCells();
     const cell = stage.querySelectorAll('td')[result.cell];
     if (cell) { cell.style.outline = '3px solid #d85b00'; cell.scrollIntoView({block:'center', inline:'center'}); }
     Bridge.send('searchIndex', {index:resultIndex});
   });
 
+  const rangeToggle = document.createElement('button'); rangeToggle.type = 'button'; rangeToggle.hidden = true;
+  rangeToggle.addEventListener('click', function() { fullSheet = !fullSheet; show(currentSheet); });
   const navigation = document.createElement('form');
   navigation.className = 'cell-navigation';
   const address = document.createElement('input'); address.placeholder = 'Cell address, e.g. A25'; address.maxLength = 12; address.setAttribute('aria-label','Go to cell');
   const go = document.createElement('button'); go.type = 'submit'; go.textContent = 'Go';
   const status = document.createElement('span'); status.setAttribute('role','status');
-  navigation.append(address,go,status); tabs.after(navigation);
+  navigation.append(address,go,rangeToggle,status); tabs.after(navigation);
   navigation.addEventListener('submit', function(event) {
     event.preventDefault(); const ref=address.value.trim().toUpperCase();
     if(!/^[A-Z]{1,3}[1-9][0-9]{0,5}$/.test(ref)){status.textContent='Enter a cell such as A25.';return;}
+    if (!fullSheet) { fullSheet = true; show(currentSheet); }
     const cell=stage.querySelector('[data-cell="'+ref+'"]');
     if(cell){cell.scrollIntoView({block:'center',inline:'center'});cell.style.outline='3px solid #d85b00';status.textContent=ref;}
     else status.textContent='Cell is empty, merged, or outside the preview limit.';

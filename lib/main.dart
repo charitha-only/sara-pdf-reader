@@ -1,3 +1,4 @@
+import 'scan_draft.dart';
 import 'reader_permissions.dart';
 import 'camera_capture.dart';
 import 'epub_document.dart';
@@ -655,8 +656,39 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _captureDocument() async {
+    final source = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera / scan'),
+              onTap: () => Navigator.pop(context, 'camera'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery photos → scan'),
+              onTap: () => Navigator.pop(context, 'gallery'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.restore),
+              title: const Text('Resume saved scan'),
+              onTap: () => Navigator.pop(context, 'resume'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
     final path = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const CameraCapturePage()),
+      MaterialPageRoute(
+        builder: (_) => CameraCapturePage(
+          autoCapture: source == 'camera',
+          galleryOnOpen: source == 'gallery',
+        ),
+      ),
     );
     if (path == null) return;
     try {
@@ -1867,7 +1899,11 @@ class _HomePageState extends State<HomePage> {
     if (Platform.isAndroid) {
       try {
         await _shareChannel.invokeMethod<void>('clearSharedCopies');
-        if (failed == 0) await ReadingStateStore.clear();
+        if (failed == 0) {
+          await ReadingStateStore.clear();
+          final root = await getApplicationSupportDirectory();
+          await ScanDraftStore(Directory('${root.path}/scan-draft-v1')).clear();
+        }
       } catch (error) {
         failed++;
       }
@@ -2623,7 +2659,7 @@ class _SettingsPage extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: const LocalizedText('Clear app PDF copies?'),
         content: const LocalizedText(
-          'This permanently removes the PDFs copied into this app and resets the library. Original files at their original locations are not changed.',
+          'This permanently removes documents copied into this app, the saved scan draft, and reading data. Original files at their original locations are not changed.',
         ),
         actions: [
           TextButton(
@@ -2700,7 +2736,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.06',
+            applicationVersion: 'v1.07',
           ),
         ),
         Card(
@@ -2774,7 +2810,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.06',
+            'Sara PDF Reader · v1.07',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,

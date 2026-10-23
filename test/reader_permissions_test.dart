@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:pageflow_reader/scan_draft.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,11 +42,24 @@ void main() {
             calls.add(call.method);
             return {'camera': false, 'photos': 'denied'};
           });
-      await tester.pumpWidget(const MaterialApp(home: CameraCapturePage()));
+      await tester.pumpWidget(
+        MaterialApp(home: CameraCapturePage(store: _NoDraftStore())),
+      );
       await tester.pumpAndSettle();
       expect(calls, contains('requestReaderPermissions'));
       expect(calls, isNot(contains('capturePhoto')));
       expect(find.textContaining('Camera permission denied.'), findsOneWidget);
     },
   );
+}
+
+class _NoDraftStore extends ScanDraftStore {
+  _NoDraftStore() : super(Directory.systemTemp);
+  @override
+  Future<Map<String, dynamic>?> load() async => {
+    'pages': <Map<String, dynamic>>[],
+    'selected': 0,
+  };
+  @override
+  Future<void> save(List<Map<String, dynamic>> pages, int selected) async {}
 }

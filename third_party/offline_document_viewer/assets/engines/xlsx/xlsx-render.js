@@ -373,9 +373,17 @@
       layout.conditionalCss = isZip && paths[name] && global.ReaderExcelExtras
         ? await ReaderExcelExtras.conditional(zipRef, paths[name]) : () => '';
       const sheet = buildTable(ws, layout, styles, opts, name);
+      const names = wb.Workbook && wb.Workbook.Names || [];
+      const printArea = names.find(function(entry) { return entry.Name === '_xlnm.Print_Area' && entry.Sheet === wb.SheetNames.indexOf(name); });
+      const match = printArea && /!([$]?[A-Z]{1,3}[$]?[1-9][0-9]*:[$]?[A-Z]{1,3}[$]?[1-9][0-9]*)$/.exec(printArea.Ref || '');
+      if (match && String(printArea.Ref).indexOf(',') < 0) {
+        const print = buildTable(ws, layout, styles, Object.assign({}, opts, {rangeOverride: match[1]}), name);
+        sheet.printHtml = print.html; sheet.printArea = match[1].replace(/[$]/g, '');
+      }
       if (isZip && paths[name] && global.ReaderExcelExtras) {
         const charts = await ReaderExcelExtras.charts(zipRef, paths[name], wb);
         sheet.html += charts.html;
+        if (sheet.printHtml) sheet.printHtml += charts.html;
         sheet.unsupportedCharts = charts.unsupported;
       }
       if (layout.conditionalCss.hasRules) sheet.html += '<p class="chart-note">Conditional formatting preview: numeric/text rules and RGB scales/bars. Formula rules and some original effects may differ.</p>';
@@ -392,7 +400,7 @@
     const ref = ws['!ref'];
     if (!ref) return { name, html: '<p class="empty">boş sayfa</p>', rows: 0, cols: 0, truncated: false };
 
-    const range = XLSX.utils.decode_range(ref);
+    const range = XLSX.utils.decode_range(opts.rangeOverride || ref);
     const lastRow = Math.min(range.e.r, range.s.r + opts.maxRows - 1);
     const lastCol = Math.min(range.e.c, range.s.c + opts.maxCols - 1);
     const truncated = lastRow < range.e.r || lastCol < range.e.c;
