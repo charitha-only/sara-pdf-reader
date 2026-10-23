@@ -1,3 +1,5 @@
+import 'document_print.dart';
+
 import 'dart:typed_data' show BytesBuilder;
 
 import 'sinhala_ocr.dart';
@@ -569,6 +571,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         }
       }
       if (!mounted) return;
+      if (action == 'print') {
+        final pdf = format == 'pdf'
+            ? bytes
+            : await compute(scanPagesPdf, pages.map((p) => p.preview).toList());
+        if (mounted) await printDocumentBytes(context, pdf, 'Sara scan');
+        return;
+      }
       final name = 'Sara-${DateTime.now().millisecondsSinceEpoch}.$format';
       final mime = format == 'pdf' ? 'application/pdf' : 'image/$format';
       if (action == 'save') {
@@ -795,6 +804,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                               ? null
                               : () => output('share'),
                           child: const Text('Share'),
+                        ),
+                        TextButton.icon(
+                          onPressed: busy || original == null
+                              ? null
+                              : () => output('print'),
+                          icon: const Icon(Icons.print),
+                          label: const Text('Print'),
                         ),
                         TextButton(
                           onPressed: busy || original == null

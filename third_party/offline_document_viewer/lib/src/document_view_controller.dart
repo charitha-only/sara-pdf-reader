@@ -59,6 +59,8 @@ class DocumentViewController extends ChangeNotifier {
   /// Scrolls to the page, sheet or slide at [index].
   Future<void> goTo(int index) async => _gotoHandler?.call(index);
 
+  Future<void> printDocument() async => _commandHandler?.call('print', {});
+
   Future<void> setViewMode(String mode) async => _commandHandler?.call('viewMode', {'mode': mode});
   Future<void> moveSearch(int direction) async => _commandHandler?.call('searchMove', {'direction': direction});
   Future<void> restoreScroll(double fraction, double horizontal) async => _commandHandler?.call('restoreViewport', {'fraction': fraction, 'horizontal': horizontal});

@@ -44,10 +44,16 @@ class MainActivity : FlutterActivity() {
         fileExecutor.execute {
             val copied = ArrayList<Map<String, String>>()
             var failure: String? = null
+            var batchTotal = 0L
             for (uri in uris) {
                 var target: File? = null
                 try {
                     require(uri.scheme == "content" || uri.scheme == "file") { "Unsupported document location." }
+                    if (uri.scheme == "file") {
+                        val source = File(requireNotNull(uri.path)).canonicalFile
+                        val storage = android.os.Environment.getExternalStorageDirectory().canonicalFile
+                        require(source.path.startsWith(storage.path + File.separator)) { "Private file locations cannot be imported from another app. Use the Android file picker." }
+                    }
                     var displayName = uri.lastPathSegment ?: "Document"
                     if (uri.scheme == "content") contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                         if (cursor.moveToFirst()) displayName = cursor.getString(0) ?: displayName
@@ -68,6 +74,8 @@ class MainActivity : FlutterActivity() {
                                 val count = input.read(buffer)
                                 if (count < 0) break
                                 total += count
+                                batchTotal += count
+                                require(batchTotal <= 256L * 1024 * 1024) { "Received files exceed the 256 MB batch limit." }
                                 require(total <= 256L * 1024 * 1024) { "Document exceeds the 256 MB import limit." }
                                 output.write(buffer, 0, count)
                             }

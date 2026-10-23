@@ -144,12 +144,19 @@ abstract final class ViewerBridge {
   /// Remote references embedded in a document are already blocked by the CSP;
   /// this is the second layer, and a measurable one — anything trying to leave
   /// shows up here.
+  static bool allowsAndroidUrl(Uri url) =>
+      url.scheme == 'https' && url.host == _androidDomain &&
+      url.userInfo.isEmpty && url.port == 443 &&
+      url.path.startsWith(_androidVirtualPath) &&
+      !url.pathSegments.any((part) => part == '..' || part == '.' || part.contains('\\')) &&
+      !RegExp(r'%(?:2e|2f|5c|25)',caseSensitive:false).hasMatch(url.toString());
+
   static NavigationActionPolicy decidePolicy(WebUri? url) {
     if (url == null) {
       return NavigationActionPolicy.CANCEL;
     }
     final bool allowed = Platform.isAndroid
-        ? url.host == _androidDomain
+        ? allowsAndroidUrl(url)
         : url.scheme == 'file';
     return allowed ? NavigationActionPolicy.ALLOW : NavigationActionPolicy.CANCEL;
   }

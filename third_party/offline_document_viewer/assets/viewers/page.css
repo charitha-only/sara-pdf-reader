@@ -78,3 +78,13 @@ mark.hit:first-of-type {
 /* Fallback never overrides authored sizes, margins, line spacing or colors. */
 body { font-family: 'Calibri', 'Sara Sinhala', sans-serif; }
 .word-paper img, .docx img { image-rendering: auto; }
+
+@media print {
+ html,body { background:white!important; margin:0!important; overflow:visible!important; }
+ #tabs,.tabs,.cell-navigation { display:none!important; }
+ #stage,.stage { height:auto!important; max-height:none!important; overflow:visible!important; zoom:1!important; }
+ .sheet-content,.docx-wrapper,.word-paper { zoom:1!important; transform:none!important; position:static!important; box-shadow:none!important; }
+ table.sheet { max-width:100%; }
+ tr { break-inside:avoid; }
+ .docx-wrapper>section { box-shadow:none!important; margin:0!important; break-after:page; }
+}

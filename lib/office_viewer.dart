@@ -74,6 +74,15 @@ class _OfficeViewerState extends State<OfficeViewer> {
     if (mounted) setState(() => restored = true);
   }
 
+  Future<void> printOffice() async {
+    try {
+      if (controller.status != DocumentViewStatus.ready) return;
+      await controller.printDocument();
+    } catch (error) {
+      message('Could not print: $error');
+    }
+  }
+
   Future<void> share() async {
     try {
       await const MethodChannel('pageflow_reader/share')
@@ -197,6 +206,11 @@ class _OfficeViewerState extends State<OfficeViewer> {
       title: Text(widget.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
         const ReaderOptionsButton(),
+        IconButton(
+          tooltip: 'Print current sheet/document',
+          icon: const Icon(Icons.print),
+          onPressed: () => printOffice(),
+        ),
         ListenableBuilder(
           listenable: controller,
           builder: (context, _) => IconButton(

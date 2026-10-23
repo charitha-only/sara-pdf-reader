@@ -271,6 +271,11 @@ class _DocumentViewState extends State<DocumentView> {
 
   Future<void> _command(String type, Map<String, Object?> payload) async {
     final controller = _webView;
+    if (type == 'print') {
+      if (controller == null || !_rendered) throw StateError('Document is not ready');
+      await controller.printCurrentPage();
+      return;
+    }
     if (controller != null) await ViewerBridge.send(controller, BridgeMessage(type, payload));
   }
 

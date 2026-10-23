@@ -26,6 +26,9 @@ void main() {
       );
       await tester.pump();
       expect(find.text('Get Started'), findsOneWidget);
+      final label=tester.widget<Text>(find.text('Get Started'));
+      expect(label.style?.color,Colors.white);
+      expect(tester.widget<Icon>(find.byIcon(Icons.arrow_forward)).color,Colors.white);
       expect(tester.takeException(), isNull);
     });
   }

@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.07** (Android build 12).
+Free, open-source Android document reader built with Flutter. Version **v1.08** (Android build 13).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.07/Sara-PDF-Reader-v1.07-arm64-v8a.apk) | 58.4 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.07/Sara-PDF-Reader-v1.07-armeabi-v7a.apk) | 52.8 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.07/Sara-PDF-Reader-v1.07.apk) | 132.5 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-v1.08-arm64-v8a.apk) | 58.4 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-v1.08-armeabi-v7a.apk) | 52.8 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-v1.08.apk) | 132.6 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.07 reader features and offline resources. The
+All three APKs have the same v1.08 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,16 +27,16 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.07**;
-Flutter's internal semantic version is `1.0.7+12`.
+must match. The current release label and Android version name are **v1.08**;
+Flutter's internal semantic version is `1.0.8+13`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.07 improvements
+## v1.08 improvements
 
-Scan drafts now auto-save and recover after reopening. Add multiple Gallery photos, review suggested paper corners, straighten photographed pages with perspective correction, and export searchable Sinhala/English PDFs with an invisible offline OCR text layer. Office previews have visible zoom controls, improved horizontal panning, and authored Excel print-range previews with a full-sheet toggle. Existing camera/photo permission setup, reading tools and version-specific GitHub downloads remain available. See [update notes](release-notes/v1.07.md).
+PDF/image/scan printing and Office preview printing now open Android print services. Welcome button text/arrow contrast is explicit. Local viewer navigation, incoming file paths and share-provider exposure were hardened; see [security checks](SECURITY.md). Scan drafts now auto-save and recover after reopening. Add multiple Gallery photos, review suggested paper corners, straighten photographed pages with perspective correction, and export searchable Sinhala/English PDFs with an invisible offline OCR text layer. Office previews have visible zoom controls, improved horizontal panning, and authored Excel print-range previews with a full-sheet toggle. Existing camera/photo permission setup, reading tools and version-specific GitHub downloads remain available. See [update notes](release-notes/v1.08.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.07/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 

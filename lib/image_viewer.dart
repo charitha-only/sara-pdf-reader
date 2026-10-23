@@ -1,3 +1,4 @@
+import 'document_print.dart';
 import 'reader_display.dart';
 
 import 'dart:io';
@@ -39,6 +40,11 @@ class ImageFileViewer extends StatelessWidget {
       title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
         const ReaderOptionsButton(),
+        IconButton(
+          tooltip: 'Print',
+          icon: const Icon(Icons.print),
+          onPressed: () => printDocumentFile(context, path, name, image: true),
+        ),
         IconButton(
           tooltip: 'Share original file',
           icon: const Icon(Icons.ios_share),

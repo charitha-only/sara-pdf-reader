@@ -1,3 +1,7 @@
+# v1.08
+
+Android printing for PDF/images/scans and Office previews, welcome label visibility fix, print-specific layout and stricter local viewer navigation. See release-notes/v1.08.md.
+
 # v1.07
 
 Office zoom/pan and Excel print-range previews; recoverable scan drafts; reviewed page-edge suggestions and perspective correction; searchable offline OCR PDF export; multi-photo Gallery imports. Physical-phone validation remains pending. See release-notes/v1.07.md.

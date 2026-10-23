@@ -1,0 +1,938 @@
+[
+  {
+    "package": {
+      "name": "_fe_analyzer_shared",
+      "ecosystem": "Pub"
+    },
+    "version": "108.0.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "analyzer",
+      "ecosystem": "Pub"
+    },
+    "version": "14.4.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "android_file_picker",
+      "ecosystem": "Pub"
+    },
+    "version": "2.0.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "archive",
+      "ecosystem": "Pub"
+    },
+    "version": "4.0.9",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "args",
+      "ecosystem": "Pub"
+    },
+    "version": "2.7.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "async",
+      "ecosystem": "Pub"
+    },
+    "version": "2.13.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "barcode",
+      "ecosystem": "Pub"
+    },
+    "version": "2.2.9",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "bidi",
+      "ecosystem": "Pub"
+    },
+    "version": "2.0.13",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "boolean_selector",
+      "ecosystem": "Pub"
+    },
+    "version": "2.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "built_collection",
+      "ecosystem": "Pub"
+    },
+    "version": "5.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "built_value",
+      "ecosystem": "Pub"
+    },
+    "version": "8.13.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "characters",
+      "ecosystem": "Pub"
+    },
+    "version": "1.4.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "clock",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "code_assets",
+      "ecosystem": "Pub"
+    },
+    "version": "2.1.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "code_builder",
+      "ecosystem": "Pub"
+    },
+    "version": "4.12.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "collection",
+      "ecosystem": "Pub"
+    },
+    "version": "1.19.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "convert",
+      "ecosystem": "Pub"
+    },
+    "version": "3.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "cross_file",
+      "ecosystem": "Pub"
+    },
+    "version": "0.3.5+5",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "crypto",
+      "ecosystem": "Pub"
+    },
+    "version": "3.0.7",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "cupertino_icons",
+      "ecosystem": "Pub"
+    },
+    "version": "1.0.9",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "cupertino_ui",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "dart_style",
+      "ecosystem": "Pub"
+    },
+    "version": "3.1.13",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "dbus",
+      "ecosystem": "Pub"
+    },
+    "version": "0.8.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "fake_async",
+      "ecosystem": "Pub"
+    },
+    "version": "1.3.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "ffi",
+      "ecosystem": "Pub"
+    },
+    "version": "2.2.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "ffi_leak_tracker",
+      "ecosystem": "Pub"
+    },
+    "version": "0.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "file",
+      "ecosystem": "Pub"
+    },
+    "version": "7.0.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "file_picker",
+      "ecosystem": "Pub"
+    },
+    "version": "13.1.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "file_picker_darwin",
+      "ecosystem": "Pub"
+    },
+    "version": "2.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "file_picker_linux",
+      "ecosystem": "Pub"
+    },
+    "version": "2.0.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "file_picker_platform_interface",
+      "ecosystem": "Pub"
+    },
+    "version": "4.0.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "file_picker_web",
+      "ecosystem": "Pub"
+    },
+    "version": "4.0.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "fixnum",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_inappwebview",
+      "ecosystem": "Pub"
+    },
+    "version": "6.1.5",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_inappwebview_internal_annotations",
+      "ecosystem": "Pub"
+    },
+    "version": "1.3.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_inappwebview_ios",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_inappwebview_macos",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_inappwebview_platform_interface",
+      "ecosystem": "Pub"
+    },
+    "version": "1.3.0+1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_inappwebview_web",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_inappwebview_windows",
+      "ecosystem": "Pub"
+    },
+    "version": "0.6.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_lints",
+      "ecosystem": "Pub"
+    },
+    "version": "6.0.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "flutter_pdf_annotations",
+      "ecosystem": "Pub"
+    },
+    "version": "1.3.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "glob",
+      "ecosystem": "Pub"
+    },
+    "version": "2.2.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "hooks",
+      "ecosystem": "Pub"
+    },
+    "version": "2.2.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "http",
+      "ecosystem": "Pub"
+    },
+    "version": "1.6.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "http_parser",
+      "ecosystem": "Pub"
+    },
+    "version": "4.1.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "image",
+      "ecosystem": "Pub"
+    },
+    "version": "4.10.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "intl",
+      "ecosystem": "Pub"
+    },
+    "version": "0.20.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "jni",
+      "ecosystem": "Pub"
+    },
+    "version": "1.0.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "jni_flutter",
+      "ecosystem": "Pub"
+    },
+    "version": "1.0.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "leak_tracker",
+      "ecosystem": "Pub"
+    },
+    "version": "11.0.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "leak_tracker_flutter_testing",
+      "ecosystem": "Pub"
+    },
+    "version": "3.0.10",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "leak_tracker_testing",
+      "ecosystem": "Pub"
+    },
+    "version": "3.0.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "lints",
+      "ecosystem": "Pub"
+    },
+    "version": "6.1.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "logging",
+      "ecosystem": "Pub"
+    },
+    "version": "1.3.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "matcher",
+      "ecosystem": "Pub"
+    },
+    "version": "0.12.20",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "material_color_utilities",
+      "ecosystem": "Pub"
+    },
+    "version": "0.13.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "material_ui",
+      "ecosystem": "Pub"
+    },
+    "version": "1.5.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "meta",
+      "ecosystem": "Pub"
+    },
+    "version": "1.19.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "native_toolchain_c",
+      "ecosystem": "Pub"
+    },
+    "version": "0.19.5",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "objective_c",
+      "ecosystem": "Pub"
+    },
+    "version": "9.6.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "open_xml",
+      "ecosystem": "Pub"
+    },
+    "version": "0.3.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "package_config",
+      "ecosystem": "Pub"
+    },
+    "version": "2.2.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path",
+      "ecosystem": "Pub"
+    },
+    "version": "1.9.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path_parsing",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path_provider",
+      "ecosystem": "Pub"
+    },
+    "version": "2.1.6",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path_provider_android",
+      "ecosystem": "Pub"
+    },
+    "version": "2.3.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path_provider_foundation",
+      "ecosystem": "Pub"
+    },
+    "version": "2.6.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path_provider_linux",
+      "ecosystem": "Pub"
+    },
+    "version": "2.2.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path_provider_platform_interface",
+      "ecosystem": "Pub"
+    },
+    "version": "2.1.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "path_provider_windows",
+      "ecosystem": "Pub"
+    },
+    "version": "2.3.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "pdf",
+      "ecosystem": "Pub"
+    },
+    "version": "3.12.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "pdf_widget_wrapper",
+      "ecosystem": "Pub"
+    },
+    "version": "1.0.4",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "pdfium_dart",
+      "ecosystem": "Pub"
+    },
+    "version": "0.3.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "pdfium_flutter",
+      "ecosystem": "Pub"
+    },
+    "version": "0.3.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "pdfrx",
+      "ecosystem": "Pub"
+    },
+    "version": "2.6.5",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "pdfrx_engine",
+      "ecosystem": "Pub"
+    },
+    "version": "0.6.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "petitparser",
+      "ecosystem": "Pub"
+    },
+    "version": "7.0.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "platform",
+      "ecosystem": "Pub"
+    },
+    "version": "3.2.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "plugin_platform_interface",
+      "ecosystem": "Pub"
+    },
+    "version": "2.1.8",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "posix",
+      "ecosystem": "Pub"
+    },
+    "version": "6.5.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "printing",
+      "ecosystem": "Pub"
+    },
+    "version": "5.14.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "process",
+      "ecosystem": "Pub"
+    },
+    "version": "5.0.6",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "pub_semver",
+      "ecosystem": "Pub"
+    },
+    "version": "2.2.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "qr",
+      "ecosystem": "Pub"
+    },
+    "version": "3.0.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "recase",
+      "ecosystem": "Pub"
+    },
+    "version": "4.1.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "record_use",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "rxdart",
+      "ecosystem": "Pub"
+    },
+    "version": "0.28.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "source_span",
+      "ecosystem": "Pub"
+    },
+    "version": "1.10.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "stack_trace",
+      "ecosystem": "Pub"
+    },
+    "version": "1.12.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "stream_channel",
+      "ecosystem": "Pub"
+    },
+    "version": "2.1.4",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "string_scanner",
+      "ecosystem": "Pub"
+    },
+    "version": "1.4.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "sync_http",
+      "ecosystem": "Pub"
+    },
+    "version": "0.3.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "synchronized",
+      "ecosystem": "Pub"
+    },
+    "version": "3.4.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "term_glyph",
+      "ecosystem": "Pub"
+    },
+    "version": "1.2.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "test_api",
+      "ecosystem": "Pub"
+    },
+    "version": "0.7.12",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "typed_data",
+      "ecosystem": "Pub"
+    },
+    "version": "1.4.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher",
+      "ecosystem": "Pub"
+    },
+    "version": "6.3.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher_android",
+      "ecosystem": "Pub"
+    },
+    "version": "6.3.33",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher_ios",
+      "ecosystem": "Pub"
+    },
+    "version": "6.4.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher_linux",
+      "ecosystem": "Pub"
+    },
+    "version": "3.2.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher_macos",
+      "ecosystem": "Pub"
+    },
+    "version": "3.2.6",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher_platform_interface",
+      "ecosystem": "Pub"
+    },
+    "version": "2.3.2",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher_web",
+      "ecosystem": "Pub"
+    },
+    "version": "2.4.3",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "url_launcher_windows",
+      "ecosystem": "Pub"
+    },
+    "version": "3.1.6",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "vector_math",
+      "ecosystem": "Pub"
+    },
+    "version": "2.4.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "vm_service",
+      "ecosystem": "Pub"
+    },
+    "version": "15.3.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "watcher",
+      "ecosystem": "Pub"
+    },
+    "version": "1.2.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "web",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "webdriver",
+      "ecosystem": "Pub"
+    },
+    "version": "3.2.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "win32",
+      "ecosystem": "Pub"
+    },
+    "version": "6.4.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "windows_file_picker",
+      "ecosystem": "Pub"
+    },
+    "version": "2.0.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "xdg_directories",
+      "ecosystem": "Pub"
+    },
+    "version": "1.1.0",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "xml",
+      "ecosystem": "Pub"
+    },
+    "version": "6.6.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "yaml",
+      "ecosystem": "Pub"
+    },
+    "version": "3.1.4",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "org.apache.poi:poi-scratchpad",
+      "ecosystem": "Maven"
+    },
+    "version": "5.5.1",
+    "advisories": []
+  },
+  {
+    "package": {
+      "name": "xerces:xercesImpl",
+      "ecosystem": "Maven"
+    },
+    "version": "2.12.2",
+    "advisories": []
+  }
+]

@@ -1,3 +1,4 @@
+import 'document_print.dart';
 import 'scan_draft.dart';
 import 'reader_permissions.dart';
 import 'camera_capture.dart';
@@ -444,6 +445,7 @@ class WelcomePage extends StatelessWidget {
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: teal,
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                           ),
@@ -461,11 +463,18 @@ class WelcomePage extends StatelessWidget {
                               child: LocalizedText(
                                 'Get Started',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontWeight: FontWeight.w700),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                             SizedBox(width: 11),
-                            Icon(Icons.arrow_forward, size: 19),
+                            Icon(
+                              Icons.arrow_forward,
+                              size: 19,
+                              color: Colors.white,
+                            ),
                           ],
                         ),
                       ),
@@ -2736,7 +2745,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.07',
+            applicationVersion: 'v1.08',
           ),
         ),
         Card(
@@ -2810,7 +2819,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.07',
+            'Sara PDF Reader · v1.08',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -5189,6 +5198,17 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
               icon: const Icon(Icons.edit_outlined),
               label: const LocalizedText('Edit'),
             ),
+          IconButton(
+            tooltip: 'Print',
+            icon: const Icon(Icons.print),
+            onPressed: widget.document.path == null
+                ? null
+                : () => printDocumentFile(
+                    context,
+                    widget.document.path!,
+                    widget.document.name,
+                  ),
+          ),
           IconButton(
             tooltip: 'Find in PDF',
             onPressed: _textSearcher == null ? null : _searchInPdf,
