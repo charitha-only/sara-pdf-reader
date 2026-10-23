@@ -1,7 +1,7 @@
 name: pageflow_reader
 description: Offline Android PDF, Office, text and image reader.
 publish_to: none
-version: 1.0.9+14
+version: 1.0.9+15
 
 environment:
   sdk: '>=3.13.0 <4.0.0'

@@ -1,3 +1,4 @@
+import 'add_document_menu.dart';
 import 'library_names.dart';
 import 'document_print.dart';
 import 'scan_draft.dart';
@@ -668,30 +669,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> _captureDocument() async {
     final source = await showModalBottomSheet<String>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera / scan'),
-              onTap: () => Navigator.pop(context, 'camera'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery photos → scan'),
-              onTap: () => Navigator.pop(context, 'gallery'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.restore),
-              title: const Text('Resume saved scan'),
-              onTap: () => Navigator.pop(context, 'resume'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => const AddDocumentMenu(),
     );
     if (source == null || !mounted) return;
+    if (source == 'documents' || source == 'images') {
+      await _importPdf(imagesOnly: source == 'images');
+      return;
+    }
     final path = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (_) => CameraCapturePage(
@@ -1002,7 +986,10 @@ class _HomePageState extends State<HomePage> {
     await _saveDocuments();
   }
 
-  Future<void> _importPdf({List<_ImportFile>? received}) async {
+  Future<void> _importPdf({
+    List<_ImportFile>? received,
+    bool imagesOnly = false,
+  }) async {
     if (_importing) return;
     List<_ImportFile> result;
     try {
@@ -1010,30 +997,32 @@ class _HomePageState extends State<HomePage> {
           received ??
           await FilePicker.pickFiles(
             type: FileType.custom,
-            allowedExtensions: const [
-              'epub',
-              'pdf',
-              'docx',
-              'xlsx',
-              'pptx',
-              'txt',
-              'plain',
-              'doc',
-              'xls',
-              'ppt',
-              'rtf',
-              'csv',
-              'tsv',
-              'docm',
-              'xlsm',
-              'pptm',
-              'png',
-              'jpg',
-              'jpeg',
-              'webp',
-              'gif',
-              'bmp',
-            ],
+            allowedExtensions: imagesOnly
+                ? const ["png", "jpg", "jpeg", "webp", "gif", "bmp"]
+                : const [
+                    'epub',
+                    'pdf',
+                    'docx',
+                    'xlsx',
+                    'pptx',
+                    'txt',
+                    'plain',
+                    'doc',
+                    'xls',
+                    'ppt',
+                    'rtf',
+                    'csv',
+                    'tsv',
+                    'docm',
+                    'xlsm',
+                    'pptm',
+                    'png',
+                    'jpg',
+                    'jpeg',
+                    'webp',
+                    'gif',
+                    'bmp',
+                  ],
           ).then((files) => files.map(_ImportFile.platform).toList());
     } catch (error) {
       if (mounted) _message('Could not open the file picker: $error');
@@ -2187,7 +2176,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: teal,
         foregroundColor: Colors.white,
         onPressed: _captureDocument,
-        tooltip: 'Take photo or scan',
+        tooltip: 'Add document, image or scan',
         child: const Icon(Icons.add_rounded, size: 29),
       ),
       body: SafeArea(
@@ -2842,7 +2831,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.09',
+            applicationVersion: 'v1.09.1',
           ),
         ),
         Card(
@@ -2916,7 +2905,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.09',
+            'Sara PDF Reader · v1.09.1',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,

@@ -1,3 +1,9 @@
+## v1.09.1
+
+- Add-source menu with separate document/image opening.
+- Automatic offline camera shadow cleanup with recoverable original comparison and saved per-page selection.
+- Bounded illumination estimation and scan input validation.
+
 # v1.09
 
 Scan brightness/contrast/shadow cleanup, saved PDF view rotation and fit, bulk display-name renaming, accessible header controls, bounded spreadsheet/merged-cell rendering and native import queue limits. See release-notes/v1.09.md.

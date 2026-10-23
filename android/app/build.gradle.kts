@@ -51,7 +51,7 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         // Public release label; Flutter uses semantic version 1.0.9 internally.
-        versionName = "v1.09"
+        versionName = "v1.09.1"
         buildConfigField("String", "RELEASE_CERT_SHA256", "\"$releaseFingerprint\"")
     }
 

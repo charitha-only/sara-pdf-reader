@@ -64,6 +64,16 @@ Future<Uint8List> convertCapture(Map<String, dynamic> args) async {
   if (args['turns'] != 0) {
     image = img.copyRotate(image, angle: (args['turns'] as int) * 90);
   }
+  if (args['clean'] == true) {
+    image = img.decodeJpg(
+      enhanceScan({
+        'bytes': Uint8List.fromList(img.encodeJpg(image, quality: 95)),
+        'brightness': 1.0,
+        'contrast': 1.0,
+        'shadows': true,
+      }),
+    )!;
+  }
   if (args['scan'] == true) {
     image = img.adjustColor(img.grayscale(image), contrast: 1.25);
   }
@@ -118,6 +128,7 @@ class _ScanPage {
   Uint8List original, preview;
   int turns = 0;
   bool scan = false;
+  bool clean = false;
 }
 
 class CameraCapturePage extends StatefulWidget {
@@ -185,6 +196,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
           );
           page.turns = record['turns'] as int;
           page.scan = record['scan'] as bool;
+          page.clean = record['clean'] == true;
           pages.add(page);
         }
         selected = (restored['selected'] as int).clamp(
@@ -206,7 +218,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     setState(() => busy = false);
     if (widget.galleryOnOpen && !draftFault) {
       await importGallery();
-    } else if (widget.autoCapture && pages.isEmpty && !draftFault) {
+    } else if (widget.autoCapture && !draftFault) {
       await capture();
     }
   }
@@ -218,6 +230,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         'preview': page.preview,
         'turns': page.turns,
         'scan': page.scan,
+        'clean': page.clean,
       },
   ];
   Future<void> saveDraft() async {
@@ -253,16 +266,17 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     unawaited(saveDraft());
   }
 
-  bool appendPhoto(Uint8List bytes) {
+  bool appendPhoto(Uint8List bytes, {Uint8List? preview}) {
     final total = pages.fold<int>(
       0,
       (sum, p) => sum + p.original.length + p.preview.length,
     );
-    if (pages.length >= 20 || total + bytes.length * 2 > 60 * 1024 * 1024) {
+    if (pages.length >= 20 ||
+        total + bytes.length + (preview ?? bytes).length > 60 * 1024 * 1024) {
       status = 'Scan limit reached. Save this scan before adding more pages.';
       return false;
     }
-    pages.add(_ScanPage(bytes, bytes));
+    pages.add(_ScanPage(bytes, preview ?? bytes));
     selected = pages.length - 1;
     return true;
   }
@@ -389,6 +403,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         'format': 'jpeg',
         'turns': 0,
         'scan': scan,
+        'clean': current!.clean,
       });
       if (mounted) {
         setState(() {
@@ -450,9 +465,20 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         'turns': 0,
         'scan': false,
       });
+      final cleaned = await compute(enhanceScan, {
+        'bytes': display,
+        'brightness': 1.0,
+        'contrast': 1.0,
+        'shadows': true,
+      });
       if (mounted) {
         setState(() {
-          appendPhoto(display);
+          if (appendPhoto(display, preview: cleaned)) {
+            current!
+              ..preview = cleaned
+              ..clean = true;
+            status = 'Offline cleanup applied. Toggle Auto clean to compare the original; crop dark borders before export.';
+          }
         });
       }
     } catch (e) {
@@ -481,6 +507,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         'format': 'jpeg',
         'turns': turns,
         'scan': scan,
+        'clean': current!.clean,
       });
       if (mounted) setState(() => current!.preview = bytes);
     } catch (e) {
@@ -520,6 +547,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         'format': 'jpeg',
         'turns': 0,
         'scan': scan,
+        'clean': current!.clean,
       });
       if (mounted) {
         setState(() {
@@ -558,11 +586,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         'bytes': corrected,
         'turns': 0,
         'scan': scan,
+        'clean': false,
         'format': 'jpeg',
       });
       if (!mounted) return;
       setState(() {
         current!.original = corrected;
+        current!.clean = false;
         current!.preview = display;
         turns = 0;
         status = 'Image cleanup applied.';
@@ -738,6 +768,16 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                       alignment: WrapAlignment.center,
                       spacing: 8,
                       children: [
+                        FilterChip(
+                          label: const Text('Auto clean'),
+                          selected: current?.clean ?? false,
+                          onSelected: busy || current == null
+                              ? null
+                              : (value) {
+                                  current!.clean = value;
+                                  refresh();
+                                },
+                        ),
                         TextButton.icon(
                           onPressed: busy ? null : capture,
                           icon: const Icon(Icons.camera_alt),

@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.09** (Android build 14).
+Free, open-source Android document reader built with Flutter. Version **v1.09.1** (Android build 15).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-v1.09-arm64-v8a.apk) | 58.5 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-v1.09-armeabi-v7a.apk) | 52.8 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-v1.09.apk) | 132.8 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09.1/Sara-PDF-Reader-v1.09.1-arm64-v8a.apk) | 58.5 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09.1/Sara-PDF-Reader-v1.09.1-armeabi-v7a.apk) | 52.8 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09.1/Sara-PDF-Reader-v1.09.1.apk) | 132.8 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.09 reader features and offline resources. The
+All three APKs have the same v1.09.1 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,16 +27,16 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.09**;
-Flutter's internal semantic version is `1.0.9+14`.
+must match. The current release label and Android version name are **v1.09.1**;
+Flutter's internal semantic version is `1.0.9+15`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.09 improvements
+## v1.09.1 improvements
 
-New in v1.09: scan image cleanup, saved PDF view rotation/fit, bulk display-name renaming, accessible header controls and bounded spreadsheet rendering. PDF/image/scan printing and Office preview printing now open Android print services. Welcome button text/arrow contrast is explicit. Local viewer navigation, incoming file paths and share-provider exposure were hardened; see [security checks](SECURITY.md). Scan drafts now auto-save and recover after reopening. Add multiple Gallery photos, review suggested paper corners, straighten photographed pages with perspective correction, and export searchable Sinhala/English PDFs with an invisible offline OCR text layer. Office previews have visible zoom controls, improved horizontal panning, and authored Excel print-range previews with a full-sheet toggle. Existing camera/photo permission setup, reading tools and version-specific GitHub downloads remain available. See [update notes](release-notes/v1.09.md).
+New in v1.09.1: the + source menu and automatic offline camera shadow cleanup with an original comparison toggle. Also includes scan image cleanup, saved PDF view rotation/fit, bulk display-name renaming, accessible header controls and bounded spreadsheet rendering. PDF/image/scan printing and Office preview printing now open Android print services. Welcome button text/arrow contrast is explicit. Local viewer navigation, incoming file paths and share-provider exposure were hardened; see [security checks](SECURITY.md). Scan drafts now auto-save and recover after reopening. Add multiple Gallery photos, review suggested paper corners, straighten photographed pages with perspective correction, and export searchable Sinhala/English PDFs with an invisible offline OCR text layer. Office previews have visible zoom controls, improved horizontal panning, and authored Excel print-range previews with a full-sheet toggle. Existing camera/photo permission setup, reading tools and version-specific GitHub downloads remain available. See [update notes](release-notes/v1.09.1.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09.1/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 

@@ -64,7 +64,8 @@ Future<Map<String, dynamic>?> _readDraft(String path, String name) async {
     if (record['turns'] is! int ||
         (record['turns'] as int) < 0 ||
         (record['turns'] as int) > 3 ||
-        record['scan'] is! bool) {
+        record['scan'] is! bool ||
+        (record['clean'] != null && record['clean'] is! bool)) {
       throw const FormatException('Invalid settings');
     }
     pages.add(record);
@@ -99,7 +100,8 @@ Future<void> _saveDraft(Map<String, dynamic> args) async {
     if (page['turns'] is! int ||
         (page['turns'] as int) < 0 ||
         (page['turns'] as int) > 3 ||
-        page['scan'] is! bool) {
+        page['scan'] is! bool ||
+        (page['clean'] != null && page['clean'] is! bool)) {
       throw const FormatException('Invalid draft settings');
     }
     for (final field in ['original', 'preview']) {
@@ -119,6 +121,7 @@ Future<void> _saveDraft(Map<String, dynamic> args) async {
     final record = <String, dynamic>{
       'turns': page['turns'],
       'scan': page['scan'],
+      'clean': page['clean'] == true,
     };
     for (final field in ['original', 'preview']) {
       final bytes = page[field] as Uint8List;

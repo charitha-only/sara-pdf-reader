@@ -5,6 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
 Uint8List enhanceScan(Map<String, dynamic> args) {
+  final bytes = args['bytes'] as Uint8List;
+  if (bytes.length > 40 * 1024 * 1024) throw ArgumentError('Scan exceeds 40 MB');
+  final info = img.JpegDecoder().startDecode(bytes);
+  if (info == null ||
+      info.width > 2400 ||
+      info.height > 2400 ||
+      bytes.length > 40 * 1024 * 1024) {
+    throw ArgumentError('Invalid scan image');
+  }
   final source = img.decodeJpg(args['bytes'] as Uint8List);
   if (source == null || source.width > 2400 || source.height > 2400) {
     throw ArgumentError('Invalid scan image');
@@ -20,8 +29,26 @@ Uint8List enhanceScan(Map<String, dynamic> args) {
     throw ArgumentError('Invalid image settings');
   }
   if (args['shadows'] == true) {
-    final small = img.copyResize(source, width: math.min(240, source.width));
-    final background = img.gaussianBlur(small, radius: 18);
+    // A local bright-envelope estimates paper illumination without averaging
+    // dark lettering into the background. Work stays bounded on a small image.
+    final scale = math.min(1.0, 240 / math.max(source.width, source.height));
+    final w = math.max(1, (source.width * scale).round());
+    final h = math.max(1, (source.height * scale).round());
+    final small = img.copyResize(source, width: w, height: h);
+    final envelope = img.Image(width: w, height: h);
+    for (final p in envelope) {
+      double light = 0;
+      for (var y = math.max(0, p.y - 8); y <= math.min(h - 1, p.y + 8); y++) {
+        for (var x = math.max(0, p.x - 8); x <= math.min(w - 1, p.x + 8); x++) {
+          light = math.max(light, small.getPixel(x, y).luminance.toDouble());
+        }
+      }
+      p
+        ..r = light
+        ..g = light
+        ..b = light;
+    }
+    final background = img.gaussianBlur(envelope, radius: 6);
     for (final pixel in source) {
       final bg = background.getPixel(
         (pixel.x * background.width / source.width).floor().clamp(
@@ -33,7 +60,9 @@ Uint8List enhanceScan(Map<String, dynamic> args) {
           background.height - 1,
         ),
       );
-      final gain = (245 / math.max(60, bg.luminance)).clamp(1.0, 2.2);
+      final paperGain = (245 / math.max(50, bg.luminance)).clamp(1.0, 4.0);
+      // Protect near-black ink even inside thick strokes or solid dark regions.
+      final gain = pixel.luminance < 30 ? math.min(paperGain, 1.6) : paperGain;
       pixel
         ..r = (pixel.r * gain).clamp(0, 255)
         ..g = (pixel.g * gain).clamp(0, 255)
