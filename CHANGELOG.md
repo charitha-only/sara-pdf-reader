@@ -1,3 +1,7 @@
+# v1.06
+
+First-open Android Camera/Photos permission requests, partial photo-access status, settings/retry controls and denial-safe camera capture.
+
 # v1.05
 
 Manual scan page crop and multi-page PDF capture/export, per-page selection, ordering and deletion.

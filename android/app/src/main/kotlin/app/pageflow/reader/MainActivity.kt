@@ -87,6 +87,20 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private var permissionResult: MethodChannel.Result? = null
+    private fun permissionState(): Map<String, Any> {
+        val photo = if (Build.VERSION.SDK_INT >= 33) "android.permission.READ_MEDIA_IMAGES" else "android.permission.READ_EXTERNAL_STORAGE"
+        return mapOf("camera" to (checkSelfPermission("android.permission.CAMERA") == PackageManager.PERMISSION_GRANTED),
+            "photos" to if (checkSelfPermission(photo) == PackageManager.PERMISSION_GRANTED) "all"
+                else if (Build.VERSION.SDK_INT >= 34 && checkSelfPermission("android.permission.READ_MEDIA_VISUAL_USER_SELECTED") == PackageManager.PERMISSION_GRANTED) "selected" else "denied")
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 2060) {
+            val result = permissionResult; permissionResult = null
+            result?.success(permissionState())
+        }
+    }
     private var cameraResult: MethodChannel.Result? = null
     private var cameraFile: File? = null
     private var receiverResult: MethodChannel.Result? = null
@@ -125,7 +139,27 @@ class MainActivity : FlutterActivity() {
         incomingBridge = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pageflow_reader/incoming")
         incomingBridge!!.setMethodCallHandler { call, result ->
             when (call.method) {
+                "permissionState" -> result.success(permissionState())
+                "permissionSetupSeen" -> result.success(getSharedPreferences("reader_setup", MODE_PRIVATE).getBoolean("permissions_v106", false))
+                "requestReaderPermissions" -> {
+                    if (permissionResult != null) { result.error("permission_busy", "A permission request is already open.", null); return@setMethodCallHandler }
+                    val kind = call.argument<String>("kind") ?: "all"
+                    val requested = ArrayList<String>()
+                    if (kind != "photos" && checkSelfPermission("android.permission.CAMERA") != PackageManager.PERMISSION_GRANTED) requested.add("android.permission.CAMERA")
+                    if (kind != "camera") {
+                        val photo = if (Build.VERSION.SDK_INT >= 33) "android.permission.READ_MEDIA_IMAGES" else "android.permission.READ_EXTERNAL_STORAGE"
+                        if (checkSelfPermission(photo) != PackageManager.PERMISSION_GRANTED) {
+                            requested.add(photo)
+                            if (Build.VERSION.SDK_INT >= 34) requested.add("android.permission.READ_MEDIA_VISUAL_USER_SELECTED")
+                        }
+                    }
+                    getSharedPreferences("reader_setup", MODE_PRIVATE).edit().putBoolean("permissions_v106", true).apply()
+                    if (requested.isEmpty()) result.success(permissionState())
+                    else { permissionResult = result; requestPermissions(requested.toTypedArray(), 2060) }
+                }
+
                 "capturePhoto" -> {
+                    if (checkSelfPermission("android.permission.CAMERA") != PackageManager.PERMISSION_GRANTED) { result.error("camera_permission", "Allow Camera in Settings > Permissions to take photos.", null); return@setMethodCallHandler }
                     if (cameraResult != null) { result.error("camera_busy", "Camera is already open.", null); return@setMethodCallHandler }
                     try {
                         val folder = File(cacheDir, "camera").apply { mkdirs() }

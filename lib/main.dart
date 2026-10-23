@@ -1,3 +1,4 @@
+import 'reader_permissions.dart';
 import 'camera_capture.dart';
 import 'epub_document.dart';
 import 'epub_reader.dart';
@@ -346,9 +347,11 @@ class _PageflowAppState extends State<PageflowApp> with WidgetsBindingObserver {
       fontFamily: 'Pageflow UI',
     ),
     themeMode: _darkMode ? ThemeMode.dark : ThemeMode.light,
-    home: _documentLaunch
-        ? HomePage(onDarkModeChanged: _setDarkMode)
-        : WelcomePage(onDarkModeChanged: _setDarkMode),
+    home: PermissionLaunchGate(
+      child: _documentLaunch
+          ? HomePage(onDarkModeChanged: _setDarkMode)
+          : WelcomePage(onDarkModeChanged: _setDarkMode),
+    ),
   );
 }
 
@@ -673,6 +676,8 @@ class _HomePageState extends State<HomePage> {
   Future<void> _readerSetup() async {
     if (!Platform.isAndroid || !mounted) return;
     try {
+      await PermissionLaunchGate.ensure(context);
+      if (!mounted) return;
       final seen = await incomingChannel.invokeMethod<bool>('readerSetupSeen');
       if (seen == true || !mounted) return;
       final settings = await showDialog<bool>(
@@ -2653,6 +2658,14 @@ class _SettingsPage extends StatelessWidget {
       children: [
         const LanguageChoice(),
         ListTile(
+          leading: const Icon(Icons.security),
+          title: const Text('Permissions'),
+          subtitle: const Text('Camera, photos and file access'),
+          onTap: () => Navigator.of(context).push<void>(
+            MaterialPageRoute(builder: (_) => const ReaderPermissionsPage()),
+          ),
+        ),
+        ListTile(
           leading: const Icon(Icons.system_update_alt),
           title: const Text('Latest version / update notes'),
           subtitle: const Text('Open GitHub releases in your browser'),
@@ -2687,7 +2700,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.05',
+            applicationVersion: 'v1.06',
           ),
         ),
         Card(
@@ -2761,7 +2774,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.05',
+            'Sara PDF Reader · v1.06',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,

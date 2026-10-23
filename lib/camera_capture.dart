@@ -149,6 +149,18 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     });
     String? path;
     try {
+      final access = await channel.invokeMapMethod<String, dynamic>(
+        'requestReaderPermissions',
+        {'kind': 'camera'},
+      );
+      if (access?['camera'] != true) {
+        if (mounted) {
+          setState(
+            () => status = 'Camera permission denied. Open Settings & privacy > Permissions to allow it.',
+          );
+        }
+        return;
+      }
       path = await channel.invokeMethod<String>('capturePhoto');
       if (path == null) return;
       final file = File(path);
