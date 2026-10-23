@@ -77,6 +77,28 @@ class _OfficeViewerState extends State<OfficeViewer> {
   Future<void> printOffice() async {
     try {
       if (controller.status != DocumentViewStatus.ready) return;
+      if (controller.info?.truncated == true) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: const Text('Print a limited preview?'),
+            content: const Text(
+              'This document reached the preview limit. Printing includes only rendered content. The original file is unchanged.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(c, true),
+                child: const Text('Print preview'),
+              ),
+            ],
+          ),
+        );
+        if (proceed != true || !mounted) return;
+      }
       await controller.printDocument();
     } catch (error) {
       message('Could not print: $error');

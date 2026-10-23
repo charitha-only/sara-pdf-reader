@@ -323,7 +323,7 @@
   };
 
   async function render(arrayBuffer, options) {
-    const opts = Object.assign({ maxRows: 3000, maxCols: 200 }, options);
+    const opts = Object.assign({ maxRows: 3000, maxCols: 200, maxCells: 60000 }, options);
     const bytes = new Uint8Array(arrayBuffer);
 
     /* Plain-text spreadsheets (CSV/TSV) have no container signature. Handing
@@ -364,7 +364,8 @@
     }
 
     const sheets = [];
-    for (const name of wb.SheetNames) {
+    let remainingCells = 250000;
+    for (const name of wb.SheetNames.slice(0,100)) {
       const ws = wb.Sheets[name];
       const layout = (isZip && paths[name])
         ? await parseSheetLayout(zipRef, paths[name])
@@ -372,13 +373,16 @@
 
       layout.conditionalCss = isZip && paths[name] && global.ReaderExcelExtras
         ? await ReaderExcelExtras.conditional(zipRef, paths[name]) : () => '';
-      const sheet = buildTable(ws, layout, styles, opts, name);
+      const sheet = remainingCells > 0 ? buildTable(ws, layout, styles, Object.assign({}, opts, {maxCells:Math.min(opts.maxCells,remainingCells)}), name) : {name,html:'<p>Workbook preview cell limit reached. Original file is unchanged.</p>',rows:0,cols:0,truncated:true};
+      remainingCells -= sheet.rows*sheet.cols;
       const names = wb.Workbook && wb.Workbook.Names || [];
       const printArea = names.find(function(entry) { return entry.Name === '_xlnm.Print_Area' && entry.Sheet === wb.SheetNames.indexOf(name); });
       const match = printArea && /!([$]?[A-Z]{1,3}[$]?[1-9][0-9]*:[$]?[A-Z]{1,3}[$]?[1-9][0-9]*)$/.exec(printArea.Ref || '');
-      if (match && String(printArea.Ref).indexOf(',') < 0) {
-        const print = buildTable(ws, layout, styles, Object.assign({}, opts, {rangeOverride: match[1]}), name);
+      if (remainingCells > 0 && match && String(printArea.Ref).indexOf(',') < 0) {
+        const print = buildTable(ws, layout, styles, Object.assign({}, opts, {rangeOverride: match[1], maxCells:Math.min(opts.maxCells,remainingCells)}), name);
+        remainingCells -= print.rows*print.cols;
         sheet.printHtml = print.html; sheet.printArea = match[1].replace(/[$]/g, '');
+        sheet.truncated = sheet.truncated || print.truncated;
       }
       if (isZip && paths[name] && global.ReaderExcelExtras) {
         const charts = await ReaderExcelExtras.charts(zipRef, paths[name], wb);
@@ -390,6 +394,7 @@
       sheets.push(sheet);
     }
 
+    if(wb.SheetNames.length>100 && sheets.length){sheets[sheets.length-1].truncated=true;sheets[sheets.length-1].html+='<p>Preview limited to the first 100 sheets.</p>';}
     return {
       sheets,
       styled: isZip && styles.xfs.length > 0,
@@ -401,21 +406,26 @@
     if (!ref) return { name, html: '<p class="empty">boş sayfa</p>', rows: 0, cols: 0, truncated: false };
 
     const range = XLSX.utils.decode_range(opts.rangeOverride || ref);
-    const lastRow = Math.min(range.e.r, range.s.r + opts.maxRows - 1);
-    const lastCol = Math.min(range.e.c, range.s.c + opts.maxCols - 1);
-    const truncated = lastRow < range.e.r || lastCol < range.e.c;
+    const lastCol = Math.min(range.e.c, range.s.c + opts.maxCols - 1, range.s.c + Math.max(1,opts.maxCells) - 1);
+    const rowBudget=Math.max(1,Math.floor(opts.maxCells/(lastCol-range.s.c+1)));
+    const lastRow = Math.min(range.e.r, range.s.r + opts.maxRows - 1, range.s.r + rowBudget - 1);
+    let truncated = lastRow < range.e.r || lastCol < range.e.c;
 
     // birleştirilmiş hücreler: kapsanan hücreleri atla, köşeye span ver
     const spanAt = {};
     const covered = new Set();
-    (ws['!merges'] || []).forEach((m) => {
-      spanAt[`${m.s.r},${m.s.c}`] = {
-        rowspan: m.e.r - m.s.r + 1, colspan: m.e.c - m.s.c + 1,
-      };
-      for (let r = m.s.r; r <= m.e.r; r++) {
-        for (let c = m.s.c; c <= m.e.c; c++) {
-          if (r !== m.s.r || c !== m.s.c) covered.add(`${r},${c}`);
-        }
+    let mergeBudget = opts.maxCells*2;
+    if((ws['!merges']||[]).length>10000)truncated=true;
+    (ws['!merges'] || []).slice(0,10000).forEach((m) => {
+      const sr=Math.max(range.s.r,m.s.r),sc=Math.max(range.s.c,m.s.c);
+      const er=Math.min(lastRow,m.e.r),ec=Math.min(lastCol,m.e.c);
+      if(sr>er || sc>ec)return;
+      const visits=(er-sr+1)*(ec-sc+1);
+      if(visits>mergeBudget){truncated=true;return;}
+      mergeBudget-=visits;
+      spanAt[`${sr},${sc}`]={rowspan:er-sr+1,colspan:ec-sc+1};
+      for(let r=sr;r<=er;r++)for(let c=sc;c<=ec;c++){
+        if(r!==sr || c!==sc)covered.add(`${r},${c}`);
       }
     });
 

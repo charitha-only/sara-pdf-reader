@@ -1,3 +1,4 @@
+import 'library_names.dart';
 import 'document_print.dart';
 import 'scan_draft.dart';
 import 'reader_permissions.dart';
@@ -1486,6 +1487,85 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _renameSelectedDocuments() async {
+    var selected = _documents
+        .where((d) => d.path != null && _selectedPaths.contains(d.path))
+        .toList();
+    if (selected.isEmpty) return;
+    final input = TextEditingController();
+    final prefix = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Rename selected documents'),
+        content: TextField(
+          controller: input,
+          maxLength: 80,
+          decoration: const InputDecoration(
+            labelText: 'Name prefix',
+            helperText: 'Display names only. Extensions stay unchanged.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(c, input.text),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+    input.dispose();
+    if (prefix == null || !mounted) return;
+    selected = _documents
+        .where((d) => d.path != null && _selectedPaths.contains(d.path))
+        .toList();
+    if (selected.isEmpty) return;
+    try {
+      final names = bulkLibraryNames(
+        selected.map((d) => d.name).toList(),
+        prefix,
+        usedNames: _documents
+            .where((d) => !selected.contains(d))
+            .map((d) => d.name)
+            .toSet(),
+      );
+      final before = List<_Document>.from(_documents);
+      setState(() {
+        for (var i = 0; i < selected.length; i++) {
+          final index = _documents.indexOf(selected[i]);
+          _documents[index] = selected[i].copyWith(name: names[i]);
+        }
+      });
+      try {
+        await _saveDocuments();
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _documents
+              ..clear()
+              ..addAll(before);
+          });
+        }
+        rethrow;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Renamed ${selected.length} document display names.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not rename: $error')));
+      }
+    }
+  }
+
   Future<void> _renameDocument(_Document document) async {
     final controller = TextEditingController(
       text: document.name.replaceAll(RegExp(r'\.[^.]+$'), ''),
@@ -2120,48 +2200,58 @@ class _HomePageState extends State<HomePage> {
                   horizontal: 12,
                   vertical: 4,
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: LocalizedText(
-                        '${_selectedPaths.length} selected',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        child: LocalizedText(
+                          '${_selectedPaths.length} selected',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: 'Select all visible documents',
-                      onPressed: () => _toggleVisibleSelection(shown),
-                      color: Colors.white,
-                      icon: const Icon(Icons.select_all),
-                    ),
-                    IconButton(
-                      tooltip: 'Favorite selected PDFs',
-                      onPressed: _toggleSelectedFavorites,
-                      color: Colors.white,
-                      icon: const Icon(Icons.star_border),
-                    ),
-                    IconButton(
-                      tooltip: 'Share selected PDFs',
-                      onPressed: _shareSelectedDocuments,
-                      color: Colors.white,
-                      icon: const Icon(Icons.share_outlined),
-                    ),
-                    IconButton(
-                      tooltip: 'Remove selected PDFs',
-                      onPressed: _removeSelectedDocuments,
-                      color: Colors.white,
-                      icon: const Icon(Icons.delete_outline),
-                    ),
-                    IconButton(
-                      tooltip: 'Cancel selection',
-                      onPressed: () => setState(_selectedPaths.clear),
-                      color: Colors.white,
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                      IconButton(
+                        tooltip: 'Select all visible documents',
+                        onPressed: () => _toggleVisibleSelection(shown),
+                        color: Colors.white,
+                        icon: const Icon(Icons.select_all),
+                      ),
+                      IconButton(
+                        tooltip: 'Favorite selected PDFs',
+                        onPressed: _toggleSelectedFavorites,
+                        color: Colors.white,
+                        icon: const Icon(Icons.star_border),
+                      ),
+                      IconButton(
+                        tooltip: 'Share selected PDFs',
+                        onPressed: _shareSelectedDocuments,
+                        color: Colors.white,
+                        icon: const Icon(Icons.share_outlined),
+                      ),
+                      IconButton(
+                        tooltip: 'Rename selected documents',
+                        onPressed: _renameSelectedDocuments,
+                        color: Colors.white,
+                        icon: const Icon(Icons.drive_file_rename_outline),
+                      ),
+                      IconButton(
+                        tooltip: 'Remove selected PDFs',
+                        onPressed: _removeSelectedDocuments,
+                        color: Colors.white,
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                      IconButton(
+                        tooltip: 'Cancel selection',
+                        onPressed: () => setState(_selectedPaths.clear),
+                        color: Colors.white,
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             Container(
@@ -2620,16 +2710,23 @@ class _RoundIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => Material(
-    color: Theme.of(context).colorScheme.surface.withValues(alpha: .9),
-    shape: const CircleBorder(),
-    child: InkWell(
-      customBorder: const CircleBorder(),
-      onTap: onTap,
-      child: SizedBox(
-        width: 43,
-        height: 43,
-        child: Icon(icon, color: Theme.of(context).colorScheme.onSurface),
+  Widget build(BuildContext context) => Tooltip(
+    message: icon == Icons.folder_open ? 'Import documents' : 'Settings',
+    child: Semantics(
+      button: true,
+      label: icon == Icons.folder_open ? 'Import documents' : 'Settings',
+      child: Material(
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: .9),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 43,
+            height: 43,
+            child: Icon(icon, color: Theme.of(context).colorScheme.onSurface),
+          ),
+        ),
       ),
     ),
   );
@@ -2745,7 +2842,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.08',
+            applicationVersion: 'v1.09',
           ),
         ),
         Card(
@@ -2819,7 +2916,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.08',
+            'Sara PDF Reader · v1.09',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -3177,6 +3274,7 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
   pdfrx.PdfTextSearcher? _textSearcher;
   String _pdfQuery = '';
   bool _fitWholePage = false;
+  int _viewTurns = 0;
   bool _sepia = false;
   late int _page;
   int? _pages;
@@ -3193,6 +3291,10 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
   }
 
   Future<pdfrx.PdfDocument> _loadReaderDocument() async {
+    final state = await ReadingStateStore.load(widget.document.path!);
+    _viewTurns = (state['viewTurns'] as int?) ?? 0;
+    _fitWholePage = state['mode'] == 'page';
+    if (state['unit'] is int) _page = (state['unit'] as int) + 1;
     await pdfrx.pdfrxFlutterInitialize();
     final document = await pdfrx.PdfDocument.openFile(widget.document.path!);
     if (!mounted) {
@@ -3259,6 +3361,7 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
 
   void _fitPage(bool whole) {
     _fitWholePage = whole;
+    _saveProgress();
     if (!_controller.isReady) return;
     _controller.goTo(
       whole
@@ -3268,6 +3371,13 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
   }
 
   void _saveProgress() {
+    unawaited(
+      ReadingStateStore.save(widget.document.path!, {
+        'unit': _page - 1,
+        'mode': _fitWholePage ? 'page' : 'width',
+        'viewTurns': _viewTurns,
+      }).catchError((Object _) {}),
+    );
     widget.onProgressChanged(
       widget.document.copyWith(
         lastPage: _page,
@@ -5219,7 +5329,13 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
             tooltip: 'Reading options',
             icon: const Icon(Icons.chrome_reader_mode_outlined),
             onSelected: (value) {
-              if (value == 'contents') {
+              if (value == 'rotateView') {
+                setState(() => _viewTurns = (_viewTurns + 1) % 4);
+                _saveProgress();
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _fitPage(_fitWholePage);
+                });
+              } else if (value == 'contents') {
                 _showContents();
               } else if (value == 'scan') {
                 Navigator.of(context).push<void>(
@@ -5249,6 +5365,10 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
               const PopupMenuItem(
                 value: 'width',
                 child: LocalizedText('Fit width'),
+              ),
+              const PopupMenuItem(
+                value: 'rotateView',
+                child: Text('Rotate view 90°'),
               ),
               const PopupMenuItem(
                 value: 'page',
@@ -5575,56 +5695,62 @@ class _PdfReaderPageState extends State<_PdfReaderPage> {
                               Colors.transparent,
                               BlendMode.dst,
                             ),
-                      child: pdfrx.PdfViewer(
-                        pdfrx.PdfDocumentRefDirect(
-                          snapshot.data!,
-                          key: pdfrx.PdfDocumentRefKey(
-                            'reader-${identityHashCode(this)}',
+                      child: RotatedBox(
+                        quarterTurns: _viewTurns,
+                        child: pdfrx.PdfViewer(
+                          pdfrx.PdfDocumentRefDirect(
+                            snapshot.data!,
+                            key: pdfrx.PdfDocumentRefKey(
+                              'reader-${identityHashCode(this)}',
+                            ),
                           ),
-                        ),
-                        controller: _controller,
-                        initialPageNumber: _page,
-                        params: pdfrx.PdfViewerParams(
-                          linkHandlerParams: pdfrx.PdfLinkHandlerParams(
-                            onLinkTap: (link) {
-                              if (link.dest != null) {
-                                _controller.goToDest(link.dest);
-                              } else if (link.url != null) {
-                                Clipboard.setData(
-                                  ClipboardData(text: link.url.toString()),
-                                );
-                                _message('External link copied.');
+                          controller: _controller,
+                          initialPageNumber: _page,
+                          params: pdfrx.PdfViewerParams(
+                            linkHandlerParams: pdfrx.PdfLinkHandlerParams(
+                              onLinkTap: (link) {
+                                if (link.dest != null) {
+                                  _controller.goToDest(link.dest);
+                                } else if (link.url != null) {
+                                  Clipboard.setData(
+                                    ClipboardData(text: link.url.toString()),
+                                  );
+                                  _message('External link copied.');
+                                }
+                              },
+                            ),
+                            maxImageBytesCachedOnMemory: 32 * 1024 * 1024,
+                            pagePaintCallbacks: [
+                              if (_textSearcher != null)
+                                _textSearcher!.pageTextMatchPaintCallback,
+                            ],
+                            verticalCacheExtent: .5,
+                            onPageChanged: (page) {
+                              if (!mounted ||
+                                  page == null ||
+                                  _pages == null ||
+                                  page == _page) {
+                                return;
                               }
+                              setState(() => _page = page);
+                              _saveProgress();
+                            },
+                            onViewerReady: (document, controller) {
+                              if (!mounted) return;
+                              setState(() {
+                                _pages = document.pages.length;
+                                _page = _page.clamp(1, _pages!).toInt();
+                                _bookmarkedPages.removeWhere(
+                                  (p) => p > _pages!,
+                                );
+                              });
+                              _textSearcher ??= pdfrx.PdfTextSearcher(
+                                _controller,
+                              )..addListener(_searchChanged);
+                              _saveProgress();
+                              _fitPage(_fitWholePage);
                             },
                           ),
-                          maxImageBytesCachedOnMemory: 32 * 1024 * 1024,
-                          pagePaintCallbacks: [
-                            if (_textSearcher != null)
-                              _textSearcher!.pageTextMatchPaintCallback,
-                          ],
-                          verticalCacheExtent: .5,
-                          onPageChanged: (page) {
-                            if (!mounted ||
-                                page == null ||
-                                _pages == null ||
-                                page == _page) {
-                              return;
-                            }
-                            setState(() => _page = page);
-                            _saveProgress();
-                          },
-                          onViewerReady: (document, controller) {
-                            if (!mounted) return;
-                            setState(() {
-                              _pages = document.pages.length;
-                              _page = _page.clamp(1, _pages!).toInt();
-                              _bookmarkedPages.removeWhere((p) => p > _pages!);
-                            });
-                            _textSearcher ??= pdfrx.PdfTextSearcher(_controller)
-                              ..addListener(_searchChanged);
-                            _saveProgress();
-                            _fitPage(_fitWholePage);
-                          },
                         ),
                       ),
                     );

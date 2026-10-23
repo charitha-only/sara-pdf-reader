@@ -16,12 +16,15 @@ class ReadingStateStore {
 
     return {
       'unit': number('unit', 200000).toInt(),
+      if (value.containsKey('viewTurns'))
+        'viewTurns': number('viewTurns', 3).toInt(),
       'scroll': number('scroll', 1),
       'horizontal': number('horizontal', 10000000),
       'mode':
           const {
             'actual',
             'width',
+            'page',
             '0.5',
             '0.75',
             '1.25',

@@ -1,3 +1,7 @@
+# v1.09
+
+Scan brightness/contrast/shadow cleanup, saved PDF view rotation and fit, bulk display-name renaming, accessible header controls, bounded spreadsheet/merged-cell rendering and native import queue limits. See release-notes/v1.09.md.
+
 # v1.08
 
 Android printing for PDF/images/scans and Office previews, welcome label visibility fix, print-specific layout and stricter local viewer navigation. See release-notes/v1.08.md.

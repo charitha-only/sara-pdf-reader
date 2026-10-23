@@ -23,6 +23,7 @@ class MainActivity : FlutterActivity() {
     private val incomingFiles = ArrayList<Map<String, String>>()
     private var incomingError: String? = null
     private var incomingLaunch = false
+    private val pendingIncoming = java.util.concurrent.atomic.AtomicInteger(0)
     private fun documentIntent(value: Intent?): Boolean =
         value?.action == Intent.ACTION_VIEW || value?.action == Intent.ACTION_SEND || value?.action == Intent.ACTION_SEND_MULTIPLE
 
@@ -41,6 +42,12 @@ class MainActivity : FlutterActivity() {
             Intent.ACTION_SEND -> listOfNotNull(value.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
             else -> value?.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.toList() ?: emptyList()
         }.distinct().take(20)
+        if (pendingIncoming.incrementAndGet() > 2) {
+            pendingIncoming.decrementAndGet()
+            incomingError = "Document imports are busy. Wait for the current import to finish."
+            incomingBridge?.invokeMethod("incomingReady", null)
+            return
+        }
         fileExecutor.execute {
             val copied = ArrayList<Map<String, String>>()
             var failure: String? = null
@@ -87,6 +94,7 @@ class MainActivity : FlutterActivity() {
                     failure = error.message ?: "Could not receive this document. Save it to Files and try again."
                 }
             }
+            pendingIncoming.decrementAndGet()
             runOnUiThread {
                 incomingFiles.addAll(copied)
                 incomingError = failure

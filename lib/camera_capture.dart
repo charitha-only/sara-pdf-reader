@@ -1,3 +1,4 @@
+import 'scan_enhance.dart';
 import 'document_print.dart';
 
 import 'dart:typed_data' show BytesBuilder;
@@ -537,6 +538,45 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     }
   }
 
+  Future<void> adjustImage() async {
+    if (busy || current == null) return;
+    setState(() => busy = true);
+    try {
+      final base = await compute(convertCapture, {
+        'bytes': original!,
+        'turns': turns,
+        'scan': false,
+        'format': 'jpeg',
+      });
+      if (!mounted) return;
+      final corrected = await Navigator.push<Uint8List>(
+        context,
+        MaterialPageRoute(builder: (_) => ScanAdjustPage(bytes: base)),
+      );
+      if (corrected == null || !mounted) return;
+      final display = await compute(convertCapture, {
+        'bytes': corrected,
+        'turns': 0,
+        'scan': scan,
+        'format': 'jpeg',
+      });
+      if (!mounted) return;
+      setState(() {
+        current!.original = corrected;
+        current!.preview = display;
+        turns = 0;
+        status = 'Image cleanup applied.';
+      });
+    } catch (error) {
+      if (mounted) setState(() => status = 'Could not adjust image: $error');
+    } finally {
+      if (mounted) {
+        setState(() => busy = false);
+        unawaited(saveDraft());
+      }
+    }
+  }
+
   Future<void> output(String action) async {
     if (busy || original == null) return;
     setState(() {
@@ -762,6 +802,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                               : straighten,
                           icon: const Icon(Icons.document_scanner),
                           label: const Text('Auto crop / straighten'),
+                        ),
+                        TextButton.icon(
+                          onPressed: busy || current == null
+                              ? null
+                              : adjustImage,
+                          icon: const Icon(Icons.tune),
+                          label: const Text('Image cleanup'),
                         ),
                         FilterChip(
                           label: const Text('Scan contrast'),

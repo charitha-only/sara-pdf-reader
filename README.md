@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.08** (Android build 13).
+Free, open-source Android document reader built with Flutter. Version **v1.09** (Android build 14).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-v1.08-arm64-v8a.apk) | 58.4 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-v1.08-armeabi-v7a.apk) | 52.8 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-v1.08.apk) | 132.6 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-v1.09-arm64-v8a.apk) | 58.5 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-v1.09-armeabi-v7a.apk) | 52.8 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-v1.09.apk) | 132.8 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.08 reader features and offline resources. The
+All three APKs have the same v1.09 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,16 +27,16 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.08**;
-Flutter's internal semantic version is `1.0.8+13`.
+must match. The current release label and Android version name are **v1.09**;
+Flutter's internal semantic version is `1.0.9+14`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.08 improvements
+## v1.09 improvements
 
-PDF/image/scan printing and Office preview printing now open Android print services. Welcome button text/arrow contrast is explicit. Local viewer navigation, incoming file paths and share-provider exposure were hardened; see [security checks](SECURITY.md). Scan drafts now auto-save and recover after reopening. Add multiple Gallery photos, review suggested paper corners, straighten photographed pages with perspective correction, and export searchable Sinhala/English PDFs with an invisible offline OCR text layer. Office previews have visible zoom controls, improved horizontal panning, and authored Excel print-range previews with a full-sheet toggle. Existing camera/photo permission setup, reading tools and version-specific GitHub downloads remain available. See [update notes](release-notes/v1.08.md).
+New in v1.09: scan image cleanup, saved PDF view rotation/fit, bulk display-name renaming, accessible header controls and bounded spreadsheet rendering. PDF/image/scan printing and Office preview printing now open Android print services. Welcome button text/arrow contrast is explicit. Local viewer navigation, incoming file paths and share-provider exposure were hardened; see [security checks](SECURITY.md). Scan drafts now auto-save and recover after reopening. Add multiple Gallery photos, review suggested paper corners, straighten photographed pages with perspective correction, and export searchable Sinhala/English PDFs with an invisible offline OCR text layer. Office previews have visible zoom controls, improved horizontal panning, and authored Excel print-range previews with a full-sheet toggle. Existing camera/photo permission setup, reading tools and version-specific GitHub downloads remain available. See [update notes](release-notes/v1.09.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.08/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.09/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 
@@ -53,7 +53,7 @@ Synthetic verification documents shown in the signed release:
 | PDF | Native PDFium rendering, zoom, fit width/page, search, bookmarks, thumbnails, sharing | Scans display as images; optional read-only Sinhala/English OCR panel; recognition is approximate; import up to 256 MB |
 | EPUB | Native reflowed text/images, chapters, search, appearance, resume | Unencrypted EPUB 2/3 XHTML content; no scripted/multimedia or fixed-layout fidelity; up to 40 MB |
 | DOCX / DOCM | Offline pages, text, tables, images, headers/footers/endnotes, Sinhala fallback fonts | Font substitutions, floating objects and page breaks may differ; macros never run |
-| XLSX / XLSM | Sheets, merges, dimensions, borders, fills, fonts, alignment, saved formula values | 3,000 rows / 200 columns per sheet; basic cached bar/line/pie/doughnut charts and numeric/text/RGB conditional previews; advanced charts, pivots and formula rules unsupported; no recalculation |
+| XLSX / XLSM | Sheets, merges, dimensions, borders, fills, fonts, alignment, saved formula values | Up to 3,000 rows / 200 columns, 60,000 cells per sheet, 250,000 cells per workbook and 100 sheets; basic cached bar/line/pie/doughnut charts and numeric/text/RGB conditional previews; advanced charts, pivots and formula rules unsupported; no recalculation |
 | PPTX / PPTM | Offline slide preview | Complex layouts may differ; no animation or macro execution |
 | DOC | Legacy Word text, styles, tables, inline images and textbox content | Approximate layout; up to 20 MB |
 | XLS | Legacy spreadsheet stored values | Limited formatting |
