@@ -1,3 +1,9 @@
+## v1.09.2
+
+- Retake only the selected scan page; cancelled retakes retain the existing page.
+- Clean-colour/black-and-white cleanup presets and original comparison.
+- Faster background estimation and smooth illumination/ink transitions.
+
 ## v1.09.1
 
 - Add-source menu with separate document/image opening.

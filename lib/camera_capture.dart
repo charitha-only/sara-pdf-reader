@@ -266,18 +266,32 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     unawaited(saveDraft());
   }
 
-  bool appendPhoto(Uint8List bytes, {Uint8List? preview}) {
+  bool appendPhoto(
+    Uint8List bytes, {
+    Uint8List? preview,
+    bool replace = false,
+  }) {
     final total = pages.fold<int>(
       0,
       (sum, p) => sum + p.original.length + p.preview.length,
     );
-    if (pages.length >= 20 ||
-        total + bytes.length + (preview ?? bytes).length > 60 * 1024 * 1024) {
+    final replacing = replace && current != null;
+    final oldSize = replacing
+        ? current!.original.length + current!.preview.length
+        : 0;
+    if ((!replacing && pages.length >= 20) ||
+        total - oldSize + bytes.length + (preview ?? bytes).length >
+            60 * 1024 * 1024) {
       status = 'Scan limit reached. Save this scan before adding more pages.';
       return false;
     }
-    pages.add(_ScanPage(bytes, preview ?? bytes));
-    selected = pages.length - 1;
+    final page = _ScanPage(bytes, preview ?? bytes);
+    if (replacing) {
+      pages[selected] = page;
+    } else {
+      pages.add(page);
+      selected = pages.length - 1;
+    }
     return true;
   }
 
@@ -428,9 +442,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     super.dispose();
   }
 
-  Future<void> capture() async {
+  Future<void> capture({bool replace = false}) async {
     if (busy || draftFault) return;
-    if (pages.length >= 20) {
+    if (!replace && pages.length >= 20) {
       setState(() => status = 'Maximum 20 pages per scan.');
       return;
     }
@@ -473,7 +487,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       });
       if (mounted) {
         setState(() {
-          if (appendPhoto(display, preview: cleaned)) {
+          if (appendPhoto(display, preview: cleaned, replace: replace)) {
             current!
               ..preview = cleaned
               ..clean = true;
@@ -741,7 +755,11 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             ),
           Expanded(
             child: preview == null
-                ? const Center(child: Text('Take a photo to get started.'))
+                ? const Center(
+                    child: Text(
+                      'Keep the whole page in view, hold steady and avoid direct glare. Take a photo to get started.',
+                    ),
+                  )
                 : LayoutBuilder(
                     builder: (_, size) => InteractiveViewer(
                       key: ValueKey(preview),
@@ -777,6 +795,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                                   current!.clean = value;
                                   refresh();
                                 },
+                        ),
+                        TextButton.icon(
+                          onPressed: busy || current == null
+                              ? null
+                              : () => capture(replace: true),
+                          icon: const Icon(Icons.replay),
+                          label: const Text('Retake page'),
                         ),
                         TextButton.icon(
                           onPressed: busy ? null : capture,
