@@ -1,3 +1,9 @@
+## v1.09.3
+
+- Replace Get Started with an automatic 1.8-second logo animation.
+- Animate the existing cap and stars independently, honour reduced motion, and skip animation for external document launches.
+- Keep first-time permission/default-reader setup and previous scan/reader features.
+
 ## v1.09.2
 
 - Retake only the selected scan page; cancelled retakes retain the existing page.

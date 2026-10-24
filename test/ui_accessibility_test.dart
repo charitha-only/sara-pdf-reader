@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pageflow_reader/main.dart' as app;
+import 'package:pageflow_reader/animated_launch.dart';
 import 'package:pageflow_reader/app_language.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   for (final size in [const Size(320, 640), const Size(1024, 768)]) {
-    testWidgets('welcome fits ${size.width} wide with large accessible text', (
+    testWidgets('launch fits ${size.width} wide with large accessible text', (
       tester,
     ) async {
       tester.view.devicePixelRatio = 1;
@@ -20,15 +20,14 @@ void main() {
               size: size,
               textScaler: const TextScaler.linear(1.5),
             ),
-            child: app.WelcomePage(onDarkModeChanged: (_) {}),
+            child: const AnimatedLaunch(
+              child: Scaffold(body: Text('Library ready')),
+            ),
           ),
         ),
       );
       await tester.pump();
-      expect(find.text('Get Started'), findsOneWidget);
-      final label=tester.widget<Text>(find.text('Get Started'));
-      expect(label.style?.color,Colors.white);
-      expect(tester.widget<Icon>(find.byIcon(Icons.arrow_forward)).color,Colors.white);
+      expect(find.text('Get Started'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }

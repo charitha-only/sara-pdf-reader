@@ -1,3 +1,4 @@
+import 'animated_launch.dart';
 import 'add_document_menu.dart';
 import 'library_names.dart';
 import 'document_print.dart';
@@ -351,273 +352,11 @@ class _PageflowAppState extends State<PageflowApp> with WidgetsBindingObserver {
       fontFamily: 'Pageflow UI',
     ),
     themeMode: _darkMode ? ThemeMode.dark : ThemeMode.light,
-    home: PermissionLaunchGate(
-      child: _documentLaunch
-          ? HomePage(onDarkModeChanged: _setDarkMode)
-          : WelcomePage(onDarkModeChanged: _setDarkMode),
-    ),
-  );
-}
-
-class WelcomePage extends StatelessWidget {
-  const WelcomePage({super.key, required this.onDarkModeChanged});
-  final ValueChanged<bool> onDarkModeChanged;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFA9E8EB), Color(0xFFE8F6F5), Colors.white],
-          stops: [0, .48, 1],
-        ),
-      ),
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(26, 24, 26, 22),
-                child: Column(
-                  children: [
-                    const SizedBox.shrink(),
-                    const SizedBox(height: 34),
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: teal,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x2206383D),
-                            blurRadius: 20,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.description_outlined,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const LocalizedText(
-                      'YOUR DOCUMENTS, IN ONE PLACE',
-                      style: TextStyle(
-                        color: Color(0xFF578086),
-                        fontSize: 10,
-                        letterSpacing: 1.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const LocalizedText(
-                      'Sara PDF Reader',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: ink,
-                        fontSize: 30,
-                        height: 1.18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                    const SizedBox(height: 11),
-                    const LocalizedText(
-                      'Read PDFs, Office documents and images\nprivately on your device.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF698287),
-                        height: 1.5,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    const SizedBox(height: 240, child: _WelcomeIllustration()),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 80,
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: teal,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        onPressed: () => Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                HomePage(onDarkModeChanged: onDarkModeChanged),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: LocalizedText(
-                                'Get Started',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 11),
-                            Icon(
-                              Icons.arrow_forward,
-                              size: 19,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+    home: _documentLaunch
+        ? PermissionLaunchGate(child: HomePage(onDarkModeChanged: _setDarkMode))
+        : AnimatedLaunch(
+            child: PermissionLaunchGate(child: HomePage(onDarkModeChanged: _setDarkMode)),
           ),
-        ),
-      ),
-    ),
-  );
-}
-
-class _WelcomeIllustration extends StatelessWidget {
-  const _WelcomeIllustration();
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, box) {
-      final h = box.maxHeight.clamp(190.0, 340.0).toDouble();
-      return Center(
-        child: SizedBox(
-          width: 300,
-          height: h,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                bottom: 10,
-                child: Container(
-                  width: 164,
-                  height: h * .78,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFDFF8F6), Color(0xFF8AC5C3)],
-                    ),
-                    border: Border.all(color: Colors.white, width: 5),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x2214575A),
-                        blurRadius: 28,
-                        offset: Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.description_outlined,
-                      size: 86,
-                      color: Color(0xFF559493),
-                    ),
-                  ),
-                ),
-              ),
-              const _FormatTile(
-                label: 'W',
-                color: Color(0xFF2375CC),
-                left: 18,
-                top: 78,
-                angle: -.12,
-              ),
-              const _FormatTile(
-                label: 'PDF',
-                color: Color(0xFFE74E52),
-                right: 15,
-                top: 58,
-                angle: .1,
-              ),
-              const _FormatTile(
-                label: 'X',
-                color: Color(0xFF16875F),
-                left: 32,
-                bottom: 44,
-                angle: -.14,
-              ),
-              const _FormatTile(
-                label: 'P',
-                color: Color(0xFFE47B31),
-                right: 26,
-                bottom: 46,
-                angle: .11,
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-
-class _FormatTile extends StatelessWidget {
-  const _FormatTile({
-    required this.label,
-    required this.color,
-    this.left,
-    this.right,
-    this.top,
-    this.bottom,
-    required this.angle,
-  });
-  final String label;
-  final Color color;
-  final double? left, right, top, bottom, angle;
-
-  @override
-  Widget build(BuildContext context) => Positioned(
-    left: left,
-    right: right,
-    top: top,
-    bottom: bottom,
-    child: Transform.rotate(
-      angle: angle!,
-      child: Container(
-        width: 48,
-        height: 54,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(13),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1C173C40),
-              blurRadius: 15,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w900,
-              fontSize: label == 'PDF' ? 12 : 18,
-            ),
-          ),
-        ),
-      ),
-    ),
   );
 }
 
@@ -2831,7 +2570,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.09.2',
+            applicationVersion: 'v1.09.3',
           ),
         ),
         Card(
@@ -2905,7 +2644,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.09.2',
+            'Sara PDF Reader · v1.09.3',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
