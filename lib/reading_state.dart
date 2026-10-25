@@ -37,6 +37,8 @@ class ReadingStateStore {
     };
   }
 
+  static Future<void> flush() => _writes;
+
   static Future<void> clear() async {
     await _writes;
     final root = await getApplicationSupportDirectory();

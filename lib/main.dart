@@ -355,7 +355,9 @@ class _PageflowAppState extends State<PageflowApp> with WidgetsBindingObserver {
     home: _documentLaunch
         ? PermissionLaunchGate(child: HomePage(onDarkModeChanged: _setDarkMode))
         : AnimatedLaunch(
-            child: PermissionLaunchGate(child: HomePage(onDarkModeChanged: _setDarkMode)),
+            child: PermissionLaunchGate(
+              child: HomePage(onDarkModeChanged: _setDarkMode),
+            ),
           ),
   );
 }
@@ -2570,7 +2572,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.09.4',
+            applicationVersion: 'v1.10',
           ),
         ),
         Card(
@@ -2644,7 +2646,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.09.4',
+            'Sara PDF Reader · v1.10',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,

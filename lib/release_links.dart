@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-const saraVersion = 'v1.09.4';
+const saraVersion = 'v1.10';
 const latestReleaseUrl =
     'https://github.com/charitha-only/sara-pdf-reader/releases/latest';
 const allReleasesUrl =

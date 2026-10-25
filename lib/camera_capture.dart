@@ -1,3 +1,4 @@
+import 'scan_export.dart';
 import 'scan_enhance.dart';
 import 'document_print.dart';
 
@@ -136,9 +137,10 @@ class CameraCapturePage extends StatefulWidget {
     super.key,
     this.autoCapture = true,
     this.galleryOnOpen = false,
+    this.reviewAfterCapture = true,
     this.store,
   });
-  final bool autoCapture, galleryOnOpen;
+  final bool autoCapture, galleryOnOpen, reviewAfterCapture;
   final ScanDraftStore? store;
   @override
   State<CameraCapturePage> createState() => _CameraCapturePageState();
@@ -168,12 +170,14 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       draftSaving = false,
       searchable = false,
       ocrActive = false;
-  String ocrLanguage = 'sin+eng';
+  String ocrLanguage = 'sin+eng', exportQuality = 'high';
+  late bool reviewEdges;
   ScanDraftStore? draftStore;
   int saveRevision = 0;
   @override
   void initState() {
     super.initState();
+    reviewEdges = widget.reviewAfterCapture;
     WidgetsBinding.instance.addPostFrameCallback((_) => startSession());
   }
 
@@ -473,12 +477,26 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         throw StateError('Photo exceeds 40 MB.');
       }
       final bytes = await file.readAsBytes();
-      final display = await compute(convertCapture, {
+      var display = await compute(convertCapture, {
         'bytes': bytes,
         'format': 'jpeg',
         'turns': 0,
         'scan': false,
       });
+      final hint = await compute(scanQualityHint, display);
+      if (!mounted) return;
+      if (reviewEdges) {
+        final corners = await Navigator.of(context).push<List<double>>(
+          MaterialPageRoute(builder: (_) => ScanCornersPage(bytes: display)),
+        );
+        if (!mounted) return;
+        if (corners != null) {
+          display = await compute(rectifyScan, {
+            'bytes': display,
+            'corners': corners,
+          });
+        }
+      }
       final cleaned = await compute(enhanceScan, {
         'bytes': display,
         'brightness': 1.0,
@@ -491,7 +509,8 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             current!
               ..preview = cleaned
               ..clean = true;
-            status = 'Offline cleanup applied. Toggle Auto clean to compare the original; crop dark borders before export.';
+            status =
+                'Offline cleanup applied. $hint Toggle Auto clean to compare the original.';
           }
         });
       }
@@ -628,10 +647,14 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       status = '';
     });
     try {
+      final exportPages = await compute(prepareScanExport, {
+        'pages': pages.map((p) => p.preview).toList(),
+        'quality': exportQuality,
+      });
       var bytes = format == 'pdf'
-          ? await compute(scanPagesPdf, pages.map((p) => p.preview).toList())
+          ? await compute(scanPagesPdf, exportPages)
           : await compute(convertCapture, {
-              'bytes': preview!,
+              'bytes': exportPages[selected],
               'format': format,
               'turns': 0,
               'scan': false,
@@ -644,7 +667,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             context,
             'Creating searchable PDF',
             (progress) => searchableScanPdf(
-              pages.map((p) => p.preview).toList(),
+              exportPages,
               bytes,
               progress,
               language: ocrLanguage,
@@ -658,7 +681,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       if (action == 'print') {
         final pdf = format == 'pdf'
             ? bytes
-            : await compute(scanPagesPdf, pages.map((p) => p.preview).toList());
+            : await compute(scanPagesPdf, exportPages);
         if (mounted) await printDocumentBytes(context, pdf, 'Sara scan');
         return;
       }
@@ -786,6 +809,35 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                       alignment: WrapAlignment.center,
                       spacing: 8,
                       children: [
+                        FilterChip(
+                          label: const Text('Review page edges'),
+                          selected: reviewEdges,
+                          onSelected: busy
+                              ? null
+                              : (value) => setState(() => reviewEdges = value),
+                        ),
+                        DropdownButton<String>(
+                          value: exportQuality,
+                          hint: const Text('Export quality'),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'high',
+                              child: Text('High quality'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'balanced',
+                              child: Text('Balanced size'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'compact',
+                              child: Text('Small file'),
+                            ),
+                          ],
+                          onChanged: busy
+                              ? null
+                              : (value) =>
+                                    setState(() => exportQuality = value!),
+                        ),
                         FilterChip(
                           label: const Text('Auto clean'),
                           selected: current?.clean ?? false,

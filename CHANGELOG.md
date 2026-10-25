@@ -1,3 +1,10 @@
+## v1.10
+
+- Camera captures open page-corner review before cleanup. Apply perspective correction or go back to keep the full photo. The Review page edges chip can turn this step off.
+- Advisory low-light/dark-surround and weak-edge/focus hints help you decide whether to retake. These are heuristic hints, not a guarantee that a page is blurry or readable.
+- High quality (2400 px/JPEG 94), Balanced size (2000 px/JPEG 86), and Small file (1400 px/JPEG 76) export choices control PDF/JPEG size. PNG exports use the chosen resolution. Upscaling is never used; earlier capture detail cannot be recovered.
+- Searchable OCR and print use the same prepared page images as the PDF, preserving alignment. Existing selected-page retake, original comparison, cleanup and draft recovery remain available.
+
 ## v1.09.4
 
 - EPUB reading position is restored after the actual chapter list has laid out, instead of before the asynchronous book view exists. Chapter navigation resets and saves the new chapter position after layout.

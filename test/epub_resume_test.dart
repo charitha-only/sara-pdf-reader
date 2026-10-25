@@ -46,12 +46,15 @@ void main() {
         await tester.pumpAndSettle();
         expect(scroll.offset, 0);
         await tester.pumpWidget(const SizedBox());
-        for (var i = 0; i < 30; i++) {
+        var flushed = false;
+        ReadingStateStore.flush().then((_) => flushed = true);
+        for (var i = 0; i < 300 && !flushed; i++) {
           await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
           );
           await tester.pump();
         }
+        expect(flushed, isTrue);
         final states = Directory('${root.path}/reader-state')
             .listSync()
             .whereType<File>()

@@ -110,7 +110,11 @@ void main() {
         try {
           await tester.pumpWidget(
             MaterialApp(
-              home: CameraCapturePage(autoCapture: false, store: store),
+              home: CameraCapturePage(
+                autoCapture: false,
+                reviewAfterCapture: false,
+                store: store,
+              ),
             ),
           );
           await tester.pumpAndSettle();
