@@ -1,3 +1,10 @@
+## v1.13
+
+- Bookmark exact chapter/scroll positions, list bookmarks, jump back to them and remove them. Each book retains up to 100 bookmarks in its private reading state; manual library backup/restore carries that state.
+- Changing EPUB text size or line spacing preserves the relative reading position after reflow instead of leaving you at an unrelated offset.
+- Book tools (contents, search, appearance and bookmarks) use a compact menu so narrow screens retain usable controls. Paper/sepia/night, Sinhala text and existing position recovery remain available.
+- Restored bookmark values, counts and label lengths are bounded before use.
+
 ## v1.12
 
 - Find duplicate files from the library sort menu. Comparisons use file size followed by streaming SHA-256 content hashes, with progress/cancel. Missing files are skipped and repeated references are counted once.

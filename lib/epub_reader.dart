@@ -24,6 +24,7 @@ class _EpubReaderState extends State<EpubReader> {
   int chapter = 0;
   double size = 19, spacing = 1.65, savedFraction = 0;
   String palette = 'paper';
+  List<Map<String, dynamic>> marks = [];
   bool ready = false, restoreQueued = false;
   Timer? saveTimer;
   @override
@@ -46,6 +47,11 @@ class _EpubReaderState extends State<EpubReader> {
       value.chapters.length - 1,
     );
     savedFraction = (saved['scroll'] as num?)?.toDouble() ?? 0;
+    marks = (saved['bookMarks'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .where((m) => (m['unit'] as int) < value.chapters.length)
+        .toList();
     size = ((prefs['epubFont'] as num?)?.toDouble() ?? 19).clamp(12, 36);
     spacing = ((prefs['epubSpacing'] as num?)?.toDouble() ?? 1.65).clamp(
       1.1,
@@ -70,6 +76,7 @@ class _EpubReaderState extends State<EpubReader> {
     unawaited(
       ReadingStateStore.save(widget.path, {
         'unit': chapter,
+        'bookMarks': marks,
         'scroll': scroll.hasClients && scroll.position.maxScrollExtent > 0
             ? scroll.offset / scroll.position.maxScrollExtent
             : 0,
@@ -77,14 +84,14 @@ class _EpubReaderState extends State<EpubReader> {
     );
   }
 
-  void go(int value) {
+  void go(int value, {double fraction = 0}) {
     save();
     saveTimer?.cancel();
     setState(() {
       chapter = value;
       ready = false;
       restoreQueued = false;
-      savedFraction = 0;
+      savedFraction = fraction;
     });
   }
 
@@ -107,6 +114,90 @@ class _EpubReaderState extends State<EpubReader> {
       ready = true;
       save();
     });
+  }
+
+  double get fraction =>
+      scroll.hasClients && scroll.position.maxScrollExtent > 0
+      ? (scroll.offset / scroll.position.maxScrollExtent).clamp(0.0, 1.0)
+      : 0;
+  void reflow(VoidCallback change) {
+    savedFraction = fraction;
+    ready = false;
+    restoreQueued = false;
+    setState(change);
+  }
+
+  void addBookmark(EpubDocument doc) {
+    if (!ready) return;
+    final position = fraction;
+    setState(() {
+      marks.removeWhere(
+        (m) =>
+            m['unit'] == chapter &&
+            ((m['fraction'] as num) - position).abs() < .005,
+      );
+      if (marks.length >= 100) marks.removeAt(0);
+      marks.add({
+        'unit': chapter,
+        'fraction': position,
+        'label': doc.chapters[chapter].title,
+      });
+    });
+    save();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Bookmarked this position')));
+  }
+
+  Future<void> showBookmarks() async {
+    final selected = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, refresh) => AlertDialog(
+          title: const Text('Book bookmarks'),
+          content: SizedBox(
+            width: 420,
+            height: 320,
+            child: marks.isEmpty
+                ? const Center(child: Text('No bookmarks yet'))
+                : ListView.builder(
+                    itemCount: marks.length,
+                    itemBuilder: (_, i) {
+                      final mark = marks[i];
+                      return ListTile(
+                        title: Text(mark['label'] as String),
+                        subtitle: Text(
+                          'Chapter ${(mark['unit'] as int) + 1} · ${((mark['fraction'] as num) * 100).round()}%',
+                        ),
+                        onTap: () => Navigator.pop(c, mark),
+                        trailing: IconButton(
+                          tooltip: 'Remove bookmark',
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () {
+                            setState(() => marks.remove(mark));
+                            refresh(() {});
+                            save();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected != null && mounted) {
+      go(
+        selected['unit'] as int,
+        fraction: (selected['fraction'] as num).toDouble(),
+      );
+    }
   }
 
   Future<void> chapters(EpubDocument doc) async {
@@ -154,7 +245,7 @@ class _EpubReaderState extends State<EpubReader> {
                         value: size,
                         label: size.round().toString(),
                         onChanged: (v) {
-                          setState(() => size = v);
+                          reflow(() => size = v);
                           refresh(() {});
                         },
                       ),
@@ -171,7 +262,7 @@ class _EpubReaderState extends State<EpubReader> {
                         divisions: 11,
                         value: spacing,
                         onChanged: (v) {
-                          setState(() => spacing = v);
+                          reflow(() => spacing = v);
                           refresh(() {});
                         },
                       ),
@@ -284,21 +375,38 @@ class _EpubReaderState extends State<EpubReader> {
           actions: [
             if (doc != null)
               IconButton(
-                tooltip: tr('Book contents'),
-                onPressed: () => chapters(doc),
-                icon: const Icon(Icons.toc),
+                tooltip: 'Bookmark this position',
+                icon: const Icon(Icons.bookmark_add_outlined),
+                onPressed: () => addBookmark(doc),
               ),
             if (doc != null)
-              IconButton(
-                tooltip: tr('Find in book'),
-                onPressed: () => find(doc),
-                icon: const Icon(Icons.search),
+              PopupMenuButton<String>(
+                tooltip: 'Book tools',
+                onSelected: (value) {
+                  switch (value) {
+                    case 'contents':
+                      chapters(doc);
+                    case 'find':
+                      find(doc);
+                    case 'appearance':
+                      appearance();
+                    case 'bookmarks':
+                      showBookmarks();
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: 'contents',
+                    child: Text('Book contents'),
+                  ),
+                  PopupMenuItem(value: 'find', child: Text('Find in book')),
+                  PopupMenuItem(
+                    value: 'appearance',
+                    child: Text('Book appearance'),
+                  ),
+                  PopupMenuItem(value: 'bookmarks', child: Text('Bookmarks')),
+                ],
               ),
-            IconButton(
-              tooltip: tr('Book appearance'),
-              onPressed: appearance,
-              icon: const Icon(Icons.text_fields),
-            ),
             const ReaderOptionsButton(),
           ],
         ),

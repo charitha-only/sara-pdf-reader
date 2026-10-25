@@ -16,6 +16,26 @@ class ReadingStateStore {
 
     return {
       'unit': number('unit', 200000).toInt(),
+      if (value['bookMarks'] is List)
+        'bookMarks': [
+          for (final raw in (value['bookMarks'] as List).whereType<Map>().take(
+            100,
+          ))
+            if (raw['unit'] is num &&
+                (raw['unit'] as num).isFinite &&
+                raw['fraction'] is num &&
+                (raw['fraction'] as num).isFinite)
+              {
+                'unit': (raw['unit'] as num).toInt().clamp(0, 200000),
+                'fraction': (raw['fraction'] as num).toDouble().clamp(0.0, 1.0),
+                'label': raw['label'] is String
+                    ? (raw['label'] as String).substring(
+                        0,
+                        (raw['label'] as String).length.clamp(0, 80),
+                      )
+                    : 'Bookmark',
+              },
+        ],
       if (value.containsKey('viewTurns'))
         'viewTurns': number('viewTurns', 3).toInt(),
       'scroll': number('scroll', 1),

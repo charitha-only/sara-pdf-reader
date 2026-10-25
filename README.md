@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.12** (Android build 21).
+Free, open-source Android document reader built with Flutter. Version **v1.13** (Android build 22).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.12/Sara-PDF-Reader-v1.12-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.12/Sara-PDF-Reader-v1.12-armeabi-v7a.apk) | 53.1 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.12/Sara-PDF-Reader-v1.12.apk) | 133.1 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-v1.13-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-v1.13-armeabi-v7a.apk) | 53.1 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-v1.13.apk) | 133.1 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.12 reader features and offline resources. The
+All three APKs have the same v1.13 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,21 +27,21 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.12**;
-Flutter's internal semantic version is `1.1.2+21`.
+must match. The current release label and Android version name are **v1.13**;
+Flutter's internal semantic version is `1.1.3+22`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.12 improvements
+## v1.13 improvements
 
-- Find duplicate files from the library sort menu. Comparisons use file size followed by streaming SHA-256 content hashes, with progress/cancel. Missing files are skipped and repeated references are counted once.
-- Duplicate results let you review each copy. No files are removed automatically; the existing document menu handles removal with confirmation.
-- Search supports multiple required terms, quoted phrases, tag:paid, folder:work, type:pdf and negative terms such as -draft. Matching includes names, folders and tags; it is not a full document-content index.
-- Existing folders/tags, favourites, recently-opened sorting and bulk display-name rename are retained.
+- Bookmark exact chapter/scroll positions, list bookmarks, jump back to them and remove them. Each book retains up to 100 bookmarks in its private reading state; manual library backup/restore carries that state.
+- Changing EPUB text size or line spacing preserves the relative reading position after reflow instead of leaving you at an unrelated offset.
+- Book tools (contents, search, appearance and bookmarks) use a compact menu so narrow screens retain usable controls. Paper/sepia/night, Sinhala text and existing position recovery remain available.
+- Restored bookmark values, counts and label lengths are bounded before use.
 
-See [update notes](release-notes/v1.12.md).
+See [update notes](release-notes/v1.13.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.12/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 
