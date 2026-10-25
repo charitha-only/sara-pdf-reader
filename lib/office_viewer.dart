@@ -204,9 +204,11 @@ class _OfficeViewerState extends State<OfficeViewer> {
     ),
   );
   Future<void> chooseScale(String value) async {
-    setState(() => mode = value);
+    if (controller.status != DocumentViewStatus.ready) return;
     try {
       await controller.setViewMode(value);
+      if (!mounted) return;
+      setState(() => mode = value);
       save();
     } catch (error) {
       message('Could not change zoom: $error');
@@ -246,11 +248,7 @@ class _OfficeViewerState extends State<OfficeViewer> {
         PopupMenuButton<String>(
           tooltip: 'Page fit',
           initialValue: mode,
-          onSelected: (value) async {
-            setState(() => mode = value);
-            await controller.setViewMode(value);
-            save();
-          },
+          onSelected: chooseScale,
           itemBuilder: (_) => const [
             PopupMenuItem(value: 'width', child: Text('Fit width')),
             PopupMenuItem(value: 'actual', child: Text('Original size (100%)')),

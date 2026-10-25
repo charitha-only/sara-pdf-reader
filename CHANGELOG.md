@@ -1,3 +1,9 @@
+## v1.09.4
+
+- EPUB reading position is restored after the actual chapter list has laid out, instead of before the asynchronous book view exists. Chapter navigation resets and saves the new chapter position after layout.
+- Office zoom choices wait until the viewer is ready, catch failures, and update the displayed scale only after a successful change. The fit menu uses the same guarded path as zoom buttons.
+- Includes the v1.09.3 logo animation and all previous scanning/reader features.
+
 ## v1.09.3
 
 - Replace Get Started with an automatic 1.8-second logo animation.

@@ -24,7 +24,7 @@ class _EpubReaderState extends State<EpubReader> {
   int chapter = 0;
   double size = 19, spacing = 1.65, savedFraction = 0;
   String palette = 'paper';
-  bool ready = false;
+  bool ready = false, restoreQueued = false;
   Timer? saveTimer;
   @override
   void initState() {
@@ -54,13 +54,8 @@ class _EpubReaderState extends State<EpubReader> {
     palette = ['paper', 'sepia', 'night'].contains(prefs['epubPalette'])
         ? prefs['epubPalette'] as String
         : 'paper';
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (scroll.hasClients) {
-        scroll.jumpTo(savedFraction * scroll.position.maxScrollExtent);
-      }
-      ready = true;
-    });
+    ready = false;
+    restoreQueued = false;
     return value;
   }
 
@@ -84,9 +79,34 @@ class _EpubReaderState extends State<EpubReader> {
 
   void go(int value) {
     save();
-    setState(() => chapter = value);
-    if (scroll.hasClients) scroll.jumpTo(0);
-    save();
+    saveTimer?.cancel();
+    setState(() {
+      chapter = value;
+      ready = false;
+      restoreQueued = false;
+      savedFraction = 0;
+    });
+  }
+
+  void restoreAfterLayout() {
+    if (ready || restoreQueued) return;
+    restoreQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      restoreQueued = false;
+      if (!mounted ||
+          !scroll.hasClients ||
+          !scroll.position.hasContentDimensions) {
+        return;
+      }
+      scroll.jumpTo(
+        (savedFraction.clamp(0.0, 1.0) * scroll.position.maxScrollExtent).clamp(
+          0.0,
+          scroll.position.maxScrollExtent,
+        ),
+      );
+      ready = true;
+      save();
+    });
   }
 
   Future<void> chapters(EpubDocument doc) async {
@@ -244,6 +264,7 @@ class _EpubReaderState extends State<EpubReader> {
     future: book,
     builder: (context, snapshot) {
       final doc = snapshot.data;
+      if (doc != null) restoreAfterLayout();
       final dark = palette == 'night';
       final fg = dark ? const Color(0xFFEAE6D9) : const Color(0xFF252321);
       return Scaffold(
