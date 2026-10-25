@@ -6,7 +6,7 @@ apk=Path(sys.argv[1]).resolve()
 sdk=Path(os.environ.get('ANDROID_SDK_ROOT') or Path(os.environ['LOCALAPPDATA'])/'Android/sdk')
 versions=[p for p in (sdk/'build-tools').iterdir() if re.fullmatch(r'\d+(\.\d+)*',p.name)]
 tools=max(versions,key=lambda p:tuple(map(int,p.name.split('.'))));aapt=tools/('aapt.exe' if os.name=='nt' else 'aapt')
-def dump(*args):return subprocess.check_output([str(aapt),*map(str,args)],text=True)
+def dump(*args):return subprocess.check_output([str(aapt),*map(str,args)],text=True,encoding='utf-8',errors='replace')
 manifest=dump('dump','xmltree',apk,'AndroidManifest.xml');badging=dump('dump','badging',apk);permissions=dump('dump','permissions',apk)
 assert 'application-debuggable' not in badging,'Release must not be debuggable'
 assert 'android.permission.INTERNET' not in permissions,'Offline release must not request Internet'

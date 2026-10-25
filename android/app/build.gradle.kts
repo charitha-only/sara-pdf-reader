@@ -50,8 +50,8 @@ android {
         // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
         // flag during build.
         versionCode = flutter.versionCode
-        // Public release label; Flutter uses semantic version 1.1.3 internally.
-        versionName = "v1.13"
+        // Public release label; Flutter uses semantic version 1.1.4 internally.
+        versionName = "v1.14"
         buildConfigField("String", "RELEASE_CERT_SHA256", "\"$releaseFingerprint\"")
     }
 

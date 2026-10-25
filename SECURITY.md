@@ -31,3 +31,7 @@ Spreadsheet rendering now bounds total cells and sheets, clips merged ranges and
 Automatic Android backup is explicitly disabled. Android 12+ cloud-backup and device-transfer rules exclude all app-data domains, including device-protected storage; legacy full backup is disabled too. User-initiated app backup/export remains available. Reference: https://developer.android.com/identity/data/autobackup . Cleartext network traffic is explicitly disabled in addition to the existing absence of INTERNET permission.
 
 Reproduce the v1.09 APK checks with `python tool/verify_security.py /path/to/release.apk` using Android SDK build-tools. It inspects the packaged manifest/resources and bundled resource guards rather than relying only on source settings.
+
+## v1.14 backup review
+
+Manual restore now checks ZIP directory bounds before decoding and inflates into bounded private staging files, verifying actual lengths and SHA-256 before committing library copies. See the [scoped dependency re-check](docs/security/v1.14-dependencies.json). Existing reporting instructions and APK privacy restrictions remain in effect.

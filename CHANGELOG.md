@@ -1,3 +1,10 @@
+## v1.14
+
+- Backup creation writes a temporary ZIP on private storage instead of retaining every source file in an in-memory archive. File changes during creation are detected; temporary files are cleaned on success/failure.
+- Restore checks a bounded central directory before invoking the ZIP decoder: entry count, supported methods, encryption flags, names, offsets and declared expanded sizes. Unsupported ZIP64/multi-disk/encrypted archives are rejected.
+- Entries inflate to bounded private staging files. A dishonest declared size cannot write unlimited output; actual lengths and streamed SHA-256 hashes must match before library copies are committed. Staging is removed even on failure/cancellation.
+- Manual backup retains folders/tags, reading positions and EPUB bookmarks. Automatic Android cloud/device-transfer backups remain disabled; no Internet or all-files permission is added.
+
 ## v1.13
 
 - Bookmark exact chapter/scroll positions, list bookmarks, jump back to them and remove them. Each book retains up to 100 bookmarks in its private reading state; manual library backup/restore carries that state.

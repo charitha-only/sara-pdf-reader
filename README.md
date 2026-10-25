@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.13** (Android build 22).
+Free, open-source Android document reader built with Flutter. Version **v1.14** (Android build 23).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-v1.13-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-v1.13-armeabi-v7a.apk) | 53.1 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-v1.13.apk) | 133.1 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.14/Sara-PDF-Reader-v1.14-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.14/Sara-PDF-Reader-v1.14-armeabi-v7a.apk) | 53.2 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.14/Sara-PDF-Reader-v1.14.apk) | 133.2 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.13 reader features and offline resources. The
+All three APKs have the same v1.14 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,21 +27,21 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.13**;
-Flutter's internal semantic version is `1.1.3+22`.
+must match. The current release label and Android version name are **v1.14**;
+Flutter's internal semantic version is `1.1.4+23`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.13 improvements
+## v1.14 improvements
 
-- Bookmark exact chapter/scroll positions, list bookmarks, jump back to them and remove them. Each book retains up to 100 bookmarks in its private reading state; manual library backup/restore carries that state.
-- Changing EPUB text size or line spacing preserves the relative reading position after reflow instead of leaving you at an unrelated offset.
-- Book tools (contents, search, appearance and bookmarks) use a compact menu so narrow screens retain usable controls. Paper/sepia/night, Sinhala text and existing position recovery remain available.
-- Restored bookmark values, counts and label lengths are bounded before use.
+- Backup creation writes a temporary ZIP on private storage instead of retaining every source file in an in-memory archive. File changes during creation are detected; temporary files are cleaned on success/failure.
+- Restore checks a bounded central directory before invoking the ZIP decoder: entry count, supported methods, encryption flags, names, offsets and declared expanded sizes. Unsupported ZIP64/multi-disk/encrypted archives are rejected.
+- Entries inflate to bounded private staging files. A dishonest declared size cannot write unlimited output; actual lengths and streamed SHA-256 hashes must match before library copies are committed. Staging is removed even on failure/cancellation.
+- Manual backup retains folders/tags, reading positions and EPUB bookmarks. Automatic Android cloud/device-transfer backups remain disabled; no Internet or all-files permission is added.
 
-See [update notes](release-notes/v1.13.md).
+See [update notes](release-notes/v1.14.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.13/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.14/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 
