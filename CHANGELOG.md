@@ -1,3 +1,10 @@
+## v1.11
+
+- Fix PowerPoint numeric zoom: 50–300% and Original size now use the requested scale, including slides narrower than the viewport. Previously slides were always reduced to width.
+- Add Fit page / overview for Word, Excel, PowerPoint and legacy Word previews, using the available view height as well as width. Large sheets may look small in overview; use Fit width or numeric zoom for reading.
+- A shared bounded scale calculation preserves authored table/cell/slide geometry and supports resizing without changing the original document. Existing merged-cell/print-range/resource limits remain in place.
+- Excel custom font styles now retain the requested font first and include the bundled Sinhala font as a glyph fallback, alongside the existing metric-compatible Office substitutes.
+
 ## v1.10
 
 - Camera captures open page-corner review before cleanup. Apply perspective correction or go back to keep the full photo. The Review page edges chip can turn this step off.

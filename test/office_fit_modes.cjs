@@ -1,0 +1,14 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const ctx={console,URL,Number,Math,JSON,Uint8Array,ArrayBuffer,TextDecoder,addEventListener(){},setTimeout,clearTimeout};ctx.window=ctx;
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('third_party/offline_document_viewer/assets/viewers/bridge.js','utf8'),ctx);
+const fit=ctx.Bridge.fitScale;
+assert.equal(fit('actual',960,540,400,700),1);
+assert.equal(fit('2',960,540,400,700),2);
+assert.equal(fit('3',200,100,400,700),3);
+assert.equal(fit('width',1000,3000,500,600),.5);
+assert.equal(fit('page',1000,3000,500,600),.2);
+assert.equal(fit('page',0,3000,500,600),1);
+assert.equal(fit('page',1000,3000,NaN,600),1);
+assert.equal(fit('9999999',1000,3000,500,600),3);
+for(const name of ['docx','xlsx','pptx','text'])assert.match(fs.readFileSync('third_party/offline_document_viewer/assets/viewers/'+name+'.js','utf8'),/Bridge.fitScale/);
+console.log('Office original/numeric zoom, width/page fits and hostile dimension checks passed.');

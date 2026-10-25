@@ -126,3 +126,6 @@ body {
  tr { break-inside:avoid; }
  .docx-wrapper>section { box-shadow:none!important; margin:0!important; break-after:page; }
 }
+
+/* Preserve document Latin metrics and supply bundled Sinhala for missing glyphs. */
+body { font-family: 'Calibri', 'Sara Sinhala', sans-serif; }

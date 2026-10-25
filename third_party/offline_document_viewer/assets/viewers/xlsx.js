@@ -34,8 +34,7 @@
     content.style.transform = ''; content.style.zoom = '1'; stage.style.height = '';
     const available = stage.clientWidth, natural = content.scrollWidth;
     if (!available || !natural) return;
-    const requested = viewMode === 'actual' ? 1 : Number(viewMode);
-    const scale = requested > 0 ? Math.max(.5, Math.min(3, requested)) : Math.min(1, available / natural);
+    const scale = Bridge.fitScale(viewMode, natural, content.scrollHeight, available, Math.max(1, innerHeight - Math.max(0, stage.getBoundingClientRect().top) - 16));
     content.style.zoom = String(scale);
     stage.style.height = Math.ceil(content.getBoundingClientRect().height) + 'px';
     stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';

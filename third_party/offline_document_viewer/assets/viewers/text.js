@@ -19,7 +19,7 @@
     const content = paper.querySelector('[data-word-content]');
     if (content && content.dataset.pageWidth) paper.style.width = content.dataset.pageWidth + 'px';
     paper.style.transform = ''; paper.style.position = ''; paper.style.zoom = '1'; stage.style.height = '';
-    const scale = viewMode === 'actual' ? 1 : Number(viewMode) > 0 ? Math.max(.5, Math.min(3, Number(viewMode))) : Math.min(1, document.documentElement.clientWidth / paper.offsetWidth);
+    const scale = Bridge.fitScale(viewMode, paper.offsetWidth, paper.offsetHeight, document.documentElement.clientWidth, Math.max(1, innerHeight - Math.max(0, stage.getBoundingClientRect().top) - 16));
     paper.style.zoom = String(scale); stage.style.height = Math.ceil(paper.getBoundingClientRect().height) + 'px';
     stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';
   }

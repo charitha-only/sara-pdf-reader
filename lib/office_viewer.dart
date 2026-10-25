@@ -59,7 +59,17 @@ class _OfficeViewerState extends State<OfficeViewer> {
   Future<void> restore(DocumentInfo info) async {
     final saved = await savedState;
     if (!mounted || restored) return;
-    const modes = {'width', 'actual', '0.5', '0.75', '1.25', '1.5', '2', '3'};
+    const modes = {
+      'page',
+      'width',
+      'actual',
+      '0.5',
+      '0.75',
+      '1.25',
+      '1.5',
+      '2',
+      '3',
+    };
     mode = modes.contains(saved['mode']) ? saved['mode'] as String : 'actual';
     await controller.setViewMode(mode);
     final unit = ((saved['unit'] as num?)?.toInt() ?? 0).clamp(
@@ -251,6 +261,7 @@ class _OfficeViewerState extends State<OfficeViewer> {
           onSelected: chooseScale,
           itemBuilder: (_) => const [
             PopupMenuItem(value: 'width', child: Text('Fit width')),
+            PopupMenuItem(value: 'page', child: Text('Fit page / overview')),
             PopupMenuItem(value: 'actual', child: Text('Original size (100%)')),
             PopupMenuItem(value: '0.5', child: Text('50%')),
             PopupMenuItem(value: '0.75', child: Text('75%')),
@@ -284,7 +295,9 @@ class _OfficeViewerState extends State<OfficeViewer> {
                   icon: const Icon(Icons.zoom_out),
                 ),
                 Text(
-                  mode == 'width'
+                  mode == 'page'
+                      ? 'Fit page'
+                      : mode == 'width'
                       ? 'Fit width'
                       : mode == 'actual'
                       ? '100%'

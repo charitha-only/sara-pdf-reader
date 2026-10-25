@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.10** (Android build 19).
+Free, open-source Android document reader built with Flutter. Version **v1.11** (Android build 20).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.10/Sara-PDF-Reader-v1.10-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.10/Sara-PDF-Reader-v1.10-armeabi-v7a.apk) | 53.1 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.10/Sara-PDF-Reader-v1.10.apk) | 133.1 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.11/Sara-PDF-Reader-v1.11-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.11/Sara-PDF-Reader-v1.11-armeabi-v7a.apk) | 53.1 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.11/Sara-PDF-Reader-v1.11.apk) | 133.1 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.10 reader features and offline resources. The
+All three APKs have the same v1.11 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,21 +27,21 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.10**;
-Flutter's internal semantic version is `1.1.0+19`.
+must match. The current release label and Android version name are **v1.11**;
+Flutter's internal semantic version is `1.1.1+20`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.10 improvements
+## v1.11 improvements
 
-- Camera captures open page-corner review before cleanup. Apply perspective correction or go back to keep the full photo. The Review page edges chip can turn this step off.
-- Advisory low-light/dark-surround and weak-edge/focus hints help you decide whether to retake. These are heuristic hints, not a guarantee that a page is blurry or readable.
-- High quality (2400 px/JPEG 94), Balanced size (2000 px/JPEG 86), and Small file (1400 px/JPEG 76) export choices control PDF/JPEG size. PNG exports use the chosen resolution. Upscaling is never used; earlier capture detail cannot be recovered.
-- Searchable OCR and print use the same prepared page images as the PDF, preserving alignment. Existing selected-page retake, original comparison, cleanup and draft recovery remain available.
+- Fix PowerPoint numeric zoom: 50–300% and Original size now use the requested scale, including slides narrower than the viewport. Previously slides were always reduced to width.
+- Add Fit page / overview for Word, Excel, PowerPoint and legacy Word previews, using the available view height as well as width. Large sheets may look small in overview; use Fit width or numeric zoom for reading.
+- A shared bounded scale calculation preserves authored table/cell/slide geometry and supports resizing without changing the original document. Existing merged-cell/print-range/resource limits remain in place.
+- Excel custom font styles now retain the requested font first and include the bundled Sinhala font as a glyph fallback, alongside the existing metric-compatible Office substitutes.
 
-See [update notes](release-notes/v1.10.md).
+See [update notes](release-notes/v1.11.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.10/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.11/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 

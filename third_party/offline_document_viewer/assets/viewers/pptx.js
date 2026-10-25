@@ -62,16 +62,16 @@
       slide.style.transform = ''; slide.style.marginBottom=''; slide.style.marginRight='';
       const width = slide.offsetWidth;
       const height = slide.offsetHeight;
-      if (viewMode === 'actual' || !width || width <= available) {
+      if (!width) {
         return;
       }
-      const scale = available / width;
+      const scale = Bridge.fitScale(viewMode, width, height, available, Math.max(1, innerHeight - 32));
       slide.style.transformOrigin = 'top left';
       slide.style.transform = 'scale(' + scale + ')';
       // Ölçek düzen kutusunu küçültmüyor; kalan boşluğu negatif kenar
       // boşluğuyla geri alıyoruz, yoksa slaytlar arası dev boşluk kalıyor.
       slide.style.marginLeft = '0';
-      slide.style.marginRight = (available - width) + 'px';
+      slide.style.marginRight = (width * (scale - 1)) + 'px';
       slide.style.marginBottom = (16 - height * (1 - scale)) + 'px';
     });
   }

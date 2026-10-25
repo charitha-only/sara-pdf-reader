@@ -277,7 +277,7 @@
       if (f.color) p.push(`color:${f.color}`);
       // Tek tırnak şart: bu dizge style="..." içine giriyor, çift tırnak
       // attribute'u erkenden kapatıp arkasındaki her şeyi (kenarlık, hizalama) yutuyor.
-      if (f.name) p.push(`font-family:'${f.name.replace(/['\\]/g, '')}',sans-serif`);
+      if (f.name) p.push(`font-family:'${f.name.replace(/['\\]/g, '')}','Sara Sinhala',sans-serif`);
       if (f.vertAlign === 'superscript') p.push('vertical-align:super;font-size:smaller');
       if (f.vertAlign === 'subscript') p.push('vertical-align:sub;font-size:smaller');
     }
