@@ -1,3 +1,4 @@
+import 'library_tools.dart';
 import 'animated_launch.dart';
 import 'add_document_menu.dart';
 import 'library_names.dart';
@@ -1050,6 +1051,78 @@ class _HomePageState extends State<HomePage> {
     await _saveDocuments();
   }
 
+  Future<void> _showDuplicates() async {
+    try {
+      final groups = await runPdfTask(
+        context,
+        'Finding duplicate files',
+        (progress) => findLibraryDuplicates(
+          _documents.map((d) => d.path).whereType<String>().toList(),
+          progress: progress,
+        ),
+      );
+      if (!mounted) return;
+      if (groups.isEmpty) {
+        _message('No identical file copies found.');
+        return;
+      }
+      final lookup = {
+        for (final doc in _documents)
+          if (doc.path != null) doc.path!: doc,
+      };
+      final rows = <({String label, _Document? document})>[];
+      for (var i = 0; i < groups.length; i++) {
+        rows.add((
+          label: 'Group ${i + 1} · ${groups[i].length} copies',
+          document: null,
+        ));
+        for (final path in groups[i]) {
+          final doc = lookup[path];
+          if (doc != null) rows.add((label: doc.name, document: doc));
+        }
+      }
+      final chosen = await showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        builder: (c) => SafeArea(
+          child: SizedBox(
+            height: MediaQuery.sizeOf(c).height * .7,
+            child: ListView.builder(
+              itemCount: rows.length + 1,
+              itemBuilder: (_, index) {
+                if (index == 0) {
+                  return const ListTile(
+                    title: Text('Identical file copies'),
+                    subtitle: Text(
+                      'Select a copy to review it; remove unwanted copies from its document menu. Nothing is deleted automatically.',
+                    ),
+                  );
+                }
+                final row = rows[index - 1], doc = row.document;
+                if (doc == null) return ListTile(title: Text(row.label));
+                return ListTile(
+                  leading: const Icon(Icons.insert_drive_file_outlined),
+                  title: Text(row.label),
+                  subtitle: Text(
+                    '${doc.folder.isEmpty ? 'Unfiled' : doc.folder} · ${doc.size}',
+                  ),
+                  onTap: () => Navigator.pop(c, doc.path),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      if (chosen != null && mounted && lookup[chosen] != null) {
+        await _openPdf(lookup[chosen]!);
+      }
+    } on TaskCancelled {
+      /* User cancelled comparison. */
+    } catch (error) {
+      if (mounted) _message('Could not compare files: $error');
+    }
+  }
+
   Future<void> _duplicateDocument(_Document document) async {
     final sourcePath = document.path;
     if (sourcePath == null) return;
@@ -1875,6 +1948,7 @@ class _HomePageState extends State<HomePage> {
     final activeFolder = folderChoices.containsKey(_folderFilter)
         ? _folderFilter
         : '*';
+    final libraryQuery = LibraryQuery(_query);
     final shown =
         _documents
             .where(
@@ -1885,9 +1959,12 @@ class _HomePageState extends State<HomePage> {
                           : doc.kind == _filter)) &&
                   (activeFolder == '*' ||
                       'folder:${doc.folder}' == activeFolder) &&
-                  '${doc.name} ${doc.folder} ${doc.tags.join(' ')}'
-                      .toLowerCase()
-                      .contains(_query.toLowerCase()),
+                  libraryQuery.matches(
+                    name: doc.name,
+                    kind: doc.kind,
+                    folder: doc.folder,
+                    tags: doc.tags,
+                  ),
             )
             .toList()
           ..sort((first, second) {
@@ -2057,7 +2134,7 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                       decoration: InputDecoration(
-                        hintText: tr('Search your documents...'),
+                        hintText: 'Search, tag:work, type:pdf, -draft',
                         hintStyle: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF96A7AA),
@@ -2274,9 +2351,20 @@ class _HomePageState extends State<HomePage> {
                             PopupMenuButton<String>(
                               tooltip: 'Sort documents',
                               initialValue: _sortOrder,
-                              onSelected: _setSortOrder,
+                              onSelected: (value) {
+                                if (value == 'duplicates') {
+                                  _showDuplicates();
+                                } else {
+                                  _setSortOrder(value);
+                                }
+                              },
                               icon: const Icon(Icons.sort, size: 20),
                               itemBuilder: (context) => const [
+                                PopupMenuItem(
+                                  value: 'duplicates',
+                                  child: Text('Find duplicate files'),
+                                ),
+                                PopupMenuDivider(),
                                 PopupMenuItem(
                                   value: 'newest',
                                   child: LocalizedText('Newest first'),
@@ -2572,7 +2660,7 @@ class _SettingsPage extends StatelessWidget {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Sara PDF Reader',
-            applicationVersion: 'v1.11',
+            applicationVersion: 'v1.12',
           ),
         ),
         Card(
@@ -2646,7 +2734,7 @@ class _SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
           child: LocalizedText(
-            'Sara PDF Reader · v1.11',
+            'Sara PDF Reader · v1.12',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,

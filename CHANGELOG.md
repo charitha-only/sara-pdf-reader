@@ -1,3 +1,10 @@
+## v1.12
+
+- Find duplicate files from the library sort menu. Comparisons use file size followed by streaming SHA-256 content hashes, with progress/cancel. Missing files are skipped and repeated references are counted once.
+- Duplicate results let you review each copy. No files are removed automatically; the existing document menu handles removal with confirmation.
+- Search supports multiple required terms, quoted phrases, tag:paid, folder:work, type:pdf and negative terms such as -draft. Matching includes names, folders and tags; it is not a full document-content index.
+- Existing folders/tags, favourites, recently-opened sorting and bulk display-name rename are retained.
+
 ## v1.11
 
 - Fix PowerPoint numeric zoom: 50–300% and Original size now use the requested scale, including slides narrower than the viewport. Previously slides were always reduced to width.
