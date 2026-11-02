@@ -22,6 +22,28 @@ Uint8List enhanceScan(Map<String, dynamic> args) {
   }
   final brightness = (args['brightness'] as num).toDouble();
   final contrast = (args['contrast'] as num).toDouble();
+  final output = enhanceScanImage(
+    source,
+    brightness: brightness,
+    contrast: contrast,
+    shadows: args['shadows'] == true,
+    monochrome: args['monochrome'] == true,
+  );
+  return Uint8List.fromList(img.encodeJpg(output, quality: 94));
+}
+
+/// Process a bounded decoded page so capture/export need no intermediate JPEG.
+/// The supplied image is consumed; callers retain their original encoded photo.
+img.Image enhanceScanImage(
+  img.Image source, {
+  double brightness = 1,
+  double contrast = 1,
+  bool shadows = false,
+  bool monochrome = false,
+}) {
+  if (source.width > 2400 || source.height > 2400) {
+    throw ArgumentError('Invalid scan image');
+  }
   if (!brightness.isFinite ||
       !contrast.isFinite ||
       brightness < .5 ||
@@ -30,13 +52,18 @@ Uint8List enhanceScan(Map<String, dynamic> args) {
       contrast > 2) {
     throw ArgumentError('Invalid image settings');
   }
-  if (args['shadows'] == true) {
+  if (shadows) {
     // A local bright-envelope estimates paper illumination without averaging
     // dark lettering into the background. Work stays bounded on a small image.
     final scale = math.min(1.0, 240 / math.max(source.width, source.height));
     final w = math.max(1, (source.width * scale).round());
     final h = math.max(1, (source.height * scale).round());
-    final small = img.copyResize(source, width: w, height: h);
+    final small = img.copyResize(
+      source,
+      width: w,
+      height: h,
+      interpolation: img.Interpolation.average,
+    );
     final envelope = img.Image(width: w, height: h);
     // Separable local maximum: same square envelope with far less work.
     final horizontal = Float32List(w * h);
@@ -90,10 +117,73 @@ Uint8List enhanceScan(Map<String, dynamic> args) {
     brightness: brightness,
     contrast: contrast,
   );
-  if (args['monochrome'] == true) {
-    output = img.adjustColor(img.grayscale(output), contrast: 1.35);
+  if (monochrome) {
+    output = _adaptiveMonochrome(output);
   }
-  return Uint8List.fromList(img.encodeJpg(output, quality: 92));
+  return output;
+}
+
+/// Local mean/variance thresholding with a soft edge retains antialiasing.
+/// Statistics are bounded to 480px, using about 5 MB instead of full-page maps.
+img.Image _adaptiveMonochrome(img.Image source) {
+  final scale = math.min(1.0, 480 / math.max(source.width, source.height));
+  final small = img.copyResize(
+    source,
+    width: math.max(1, (source.width * scale).round()),
+    height: math.max(1, (source.height * scale).round()),
+    interpolation: img.Interpolation.average,
+  );
+  final w = small.width, h = small.height, stride = w + 1;
+  final sums = Float64List(stride * (h + 1));
+  final squares = Float64List(sums.length);
+  for (var y = 0; y < h; y++) {
+    double row = 0, rowSquare = 0;
+    for (var x = 0; x < w; x++) {
+      final light = small.getPixel(x, y).luminance;
+      row += light;
+      rowSquare += light * light;
+      final i = (y + 1) * stride + x + 1;
+      sums[i] = sums[i - stride] + row;
+      squares[i] = squares[i - stride] + rowSquare;
+    }
+  }
+  final thresholds = Float32List(w * h);
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      final left = math.max(0, x - 12), right = math.min(w, x + 13);
+      final top = math.max(0, y - 12), bottom = math.min(h, y + 13);
+      final n = (right - left) * (bottom - top);
+      double area(Float64List values) =>
+          values[bottom * stride + right] -
+          values[top * stride + right] -
+          values[bottom * stride + left] +
+          values[top * stride + left];
+      final mean = area(sums) / n;
+      final deviation = math.sqrt(math.max(0, area(squares) / n - mean * mean));
+      thresholds[y * w + x] = (mean * (1 + .2 * (deviation / 128 - 1))).clamp(
+        45,
+        235,
+      );
+    }
+  }
+  final result = img.Image(width: source.width, height: source.height);
+  for (final p in result) {
+    final x = p.x * (w - 1) / math.max(1, source.width - 1);
+    final y = p.y * (h - 1) / math.max(1, source.height - 1);
+    final x0 = x.floor(), y0 = y.floor();
+    final x1 = math.min(w - 1, x0 + 1), y1 = math.min(h - 1, y0 + 1);
+    final fx = x - x0, fy = y - y0;
+    final a = thresholds[y0 * w + x0] * (1 - fx) + thresholds[y0 * w + x1] * fx;
+    final b = thresholds[y1 * w + x0] * (1 - fx) + thresholds[y1 * w + x1] * fx;
+    final threshold = a * (1 - fy) + b * fy;
+    final value = ((source.getPixel(p.x, p.y).luminance - threshold) * 8 + 128)
+        .clamp(0, 255);
+    p
+      ..r = value
+      ..g = value
+      ..b = value;
+  }
+  return result;
 }
 
 class ScanAdjustPage extends StatefulWidget {

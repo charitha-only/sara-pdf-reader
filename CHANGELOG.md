@@ -1,3 +1,10 @@
+## v1.15
+
+- Adaptive B&W text processing uses local lighting and contrast, with soft transitions around text edges. This improves readability across unevenly lit receipt/document pages while retaining solid dark ink. Both the scan toggle and image-cleanup B&W preset use the same processing.
+- Clean PNG exports process the decoded image directly, removing intermediate JPEG encode/decode cycles that could damage fine strokes and coloured stamp edges. JPEG exports still use their selected compression settings.
+- Camera photo reduction and shadow estimation now use area averaging to reduce aliasing in fine lines. Cleanup previews use JPEG quality 94.
+- The scan toggle is labelled B&W text, with a hint to turn it off when colours matter. Clean colour and the retained original remain available; source gallery files are unchanged.
+
 ## v1.14
 
 - Backup creation writes a temporary ZIP on private storage instead of retaining every source file in an in-memory archive. File changes during creation are detected; temporary files are cleaned on success/failure.

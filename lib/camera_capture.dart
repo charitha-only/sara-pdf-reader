@@ -43,6 +43,7 @@ Future<Uint8List> convertCapture(Map<String, dynamic> args) async {
       image,
       width: image.width >= image.height ? 2400 : null,
       height: image.height > image.width ? 2400 : null,
+      interpolation: img.Interpolation.average,
     );
   }
   final crop = args['crop'] as List<double>?;
@@ -65,18 +66,12 @@ Future<Uint8List> convertCapture(Map<String, dynamic> args) async {
   if (args['turns'] != 0) {
     image = img.copyRotate(image, angle: (args['turns'] as int) * 90);
   }
-  if (args['clean'] == true) {
-    image = img.decodeJpg(
-      enhanceScan({
-        'bytes': Uint8List.fromList(img.encodeJpg(image, quality: 95)),
-        'brightness': 1.0,
-        'contrast': 1.0,
-        'shadows': true,
-      }),
-    )!;
-  }
-  if (args['scan'] == true) {
-    image = img.adjustColor(img.grayscale(image), contrast: 1.25);
+  if (args['clean'] == true || args['scan'] == true) {
+    image = enhanceScanImage(
+      image,
+      shadows: args['clean'] == true,
+      monochrome: args['scan'] == true,
+    );
   }
   final format = args['format'] as String;
   if (format == 'png') return Uint8List.fromList(img.encodePng(image));
@@ -928,7 +923,8 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                           label: const Text('Image cleanup'),
                         ),
                         FilterChip(
-                          label: const Text('Scan contrast'),
+                          label: const Text('B&W text'),
+                          tooltip: 'Improve text contrast. Turn off to keep colours.',
                           selected: scan,
                           onSelected: busy || original == null
                               ? null
