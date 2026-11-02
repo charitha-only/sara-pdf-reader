@@ -24,6 +24,7 @@
     if (!natural) return;
     const available = document.documentElement.clientWidth;
     const scale = Bridge.fitScale(viewMode, natural, pages[0].offsetHeight, available, Math.max(1, innerHeight - Math.max(0, stage.getBoundingClientRect().top) - 16));
+    Bridge.reportScale(scale);
     wrapper.style.width = natural + 'px'; wrapper.style.zoom = String(scale);
     stage.style.height = Math.ceil(wrapper.getBoundingClientRect().height) + 'px';
     stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';

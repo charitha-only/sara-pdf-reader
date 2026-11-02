@@ -35,6 +35,7 @@
     const available = stage.clientWidth, natural = content.scrollWidth;
     if (!available || !natural) return;
     const scale = Bridge.fitScale(viewMode, natural, content.scrollHeight, available, Math.max(1, innerHeight - Math.max(0, stage.getBoundingClientRect().top) - 16));
+    Bridge.reportScale(scale);
     content.style.zoom = String(scale);
     stage.style.height = Math.ceil(content.getBoundingClientRect().height) + 'px';
     stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';

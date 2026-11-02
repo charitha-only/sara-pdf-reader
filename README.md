@@ -1,6 +1,6 @@
 # Sara PDF Reader
 
-Free, open-source Android document reader built with Flutter. Version **v1.15** (Android build 24).
+Free, open-source Android document reader built with Flutter. Version **v1.16** (Android build 25).
 Read PDFs, preview Office documents, read EPUB books and UTF-8 text, and view images locally.
 The app was previously developed under the working name Pageflow.
 The first release focuses on reading. Editing, file creation and conversion
@@ -11,11 +11,11 @@ iOS is not a supported release target yet.
 
 | APK | Download size | Device |
 | --- | --- | --- |
-| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.15/Sara-PDF-Reader-v1.15-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
-| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.15/Sara-PDF-Reader-v1.15-armeabi-v7a.apk) | 53.2 MB | Phones running 32-bit Android |
-| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.15/Sara-PDF-Reader-v1.15.apk) | 133.2 MB | Use when unsure which architecture is supported |
+| [ARM64 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.16/Sara-PDF-Reader-v1.16-arm64-v8a.apk) | 58.8 MB | Most modern Android phones |
+| [ARMv7 APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.16/Sara-PDF-Reader-v1.16-armeabi-v7a.apk) | 53.2 MB | Phones running 32-bit Android |
+| [Universal APK](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.16/Sara-PDF-Reader-v1.16.apk) | 133.3 MB | Use when unsure which architecture is supported |
 
-All three APKs have the same v1.15 reader features and offline resources. The
+All three APKs have the same v1.16 reader features and offline resources. The
 universal APK bundles native libraries for ARM64, ARMv7 and x86-64 together;
 the smaller APKs include the libraries for one architecture. Sizes use MiB,
 rounded to match GitHub's displayed MB sizes.
@@ -27,21 +27,21 @@ Each release has its own version tag, update notes, signed APK and SHA-256
 checksum. Older releases remain available when a new version is published.
 Install the APK on Android 8 or later. To update an existing installation,
 download and install the newer APK from the same publisher; the signing key
-must match. The current release label and Android version name are **v1.15**;
-Flutter's internal semantic version is `1.1.5+24`.
+must match. The current release label and Android version name are **v1.16**;
+Flutter's internal semantic version is `1.1.6+25`.
 
 See [RELEASING.md](RELEASING.md) for publishing the next version.
 
-## v1.15 improvements
+## v1.16 improvements
 
-- Adaptive B&W text processing uses local lighting and contrast, with soft transitions around text edges. This improves readability across unevenly lit receipt/document pages while retaining solid dark ink. Both the scan toggle and image-cleanup B&W preset use the same processing.
-- Clean PNG exports process the decoded image directly, removing intermediate JPEG encode/decode cycles that could damage fine strokes and coloured stamp edges. JPEG exports still use their selected compression settings.
-- Camera photo reduction and shadow estimation now use area averaging to reduce aliasing in fine lines. Cleanup previews use JPEG quality 94.
-- The scan toggle is labelled B&W text, with a hint to turn it off when colours matter. Clean colour and the retained original remain available; source gallery files are unchanged.
+- New Office documents open in Fit width so wide Word pages and Excel sheets are visible across the screen. Existing saved view settings still take precedence.
+- Fit width and Fit page display the effective renderer percentage. Word, Excel, PowerPoint and legacy/text viewers report their applied CSS scale through the existing local bridge; invalid or non-finite reports are ignored.
+- Zoom buttons step from the currently displayed scale instead of treating every fit as 100% and jumping to 125%. Added 10% and 25% manual levels for wide sheets; manual zoom is bounded to 10–300%. Fit modes can still go smaller to show a very wide document.
+- Zoom buttons disable at their respective limits, while loading/restoring, and while a zoom command is pending. Low manual zoom settings are retained in reading data and manual backups.
 
-See [update notes](release-notes/v1.15.md).
+See [update notes](release-notes/v1.16.md).
 
-[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.15/Sara-PDF-Reader-logo.png).
+[Download the Sara logo PNG](https://github.com/charitha-only/sara-pdf-reader/releases/download/v1.16/Sara-PDF-Reader-logo.png).
 
 ## Reader previews
 

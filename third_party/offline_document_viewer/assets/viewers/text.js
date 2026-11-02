@@ -15,12 +15,12 @@
   /* PAGEFLOW PATCH: fit legacy Word paper without altering table widths. */
   function fitLegacy() {
     const paper = stage.querySelector('.word-paper');
-    if (!paper) { stage.style.zoom = viewMode === 'actual' || viewMode === 'width' ? '1' : String(Math.max(.5, Math.min(3, Number(viewMode) || 1))); return; }
+    if (!paper) { const scale = Bridge.fitScale(viewMode, 1, 1, 1, 1); stage.style.zoom = String(scale); Bridge.reportScale(scale); return; }
     const content = paper.querySelector('[data-word-content]');
     if (content && content.dataset.pageWidth) paper.style.width = content.dataset.pageWidth + 'px';
     paper.style.transform = ''; paper.style.position = ''; paper.style.zoom = '1'; stage.style.height = '';
     const scale = Bridge.fitScale(viewMode, paper.offsetWidth, paper.offsetHeight, document.documentElement.clientWidth, Math.max(1, innerHeight - Math.max(0, stage.getBoundingClientRect().top) - 16));
-    paper.style.zoom = String(scale); stage.style.height = Math.ceil(paper.getBoundingClientRect().height) + 'px';
+    Bridge.reportScale(scale); paper.style.zoom = String(scale); stage.style.height = Math.ceil(paper.getBoundingClientRect().height) + 'px';
     stage.style.overflowX = 'auto'; stage.style.overflowY = 'hidden';
   }
   fitLegacy();

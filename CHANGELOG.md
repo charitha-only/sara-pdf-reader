@@ -1,3 +1,10 @@
+## v1.16
+
+- New Office documents open in Fit width so wide Word pages and Excel sheets are visible across the screen. Existing saved view settings still take precedence.
+- Fit width and Fit page display the effective renderer percentage. Word, Excel, PowerPoint and legacy/text viewers report their applied CSS scale through the existing local bridge; invalid or non-finite reports are ignored.
+- Zoom buttons step from the currently displayed scale instead of treating every fit as 100% and jumping to 125%. Added 10% and 25% manual levels for wide sheets; manual zoom is bounded to 10–300%. Fit modes can still go smaller to show a very wide document.
+- Zoom buttons disable at their respective limits, while loading/restoring, and while a zoom command is pending. Low manual zoom settings are retained in reading data and manual backups.
+
 ## v1.15
 
 - Adaptive B&W text processing uses local lighting and contrast, with soft transitions around text edges. This improves readability across unevenly lit receipt/document pages while retaining solid dark ink. Both the scan toggle and image-cleanup B&W preset use the same processing.

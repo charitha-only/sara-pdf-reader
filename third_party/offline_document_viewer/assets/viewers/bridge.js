@@ -198,11 +198,14 @@
   Bridge.fitScale = function(mode, width, height, availableWidth, availableHeight) {
     if (mode === 'actual') return 1;
     const explicit = Number(mode);
-    if (Number.isFinite(explicit) && explicit > 0) return Math.max(.5, Math.min(3, explicit));
+    if (Number.isFinite(explicit) && explicit > 0) return Math.max(.1, Math.min(3, explicit));
     if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(availableWidth) || availableWidth <= 0) return 1;
     let scale = Math.min(1, availableWidth / width);
     if (mode === 'page' && Number.isFinite(height) && height > 0 && Number.isFinite(availableHeight) && availableHeight > 0) scale = Math.min(scale, availableHeight / height);
     return Math.max(.0001, scale);
+  };
+  Bridge.reportScale = function(scale) {
+    if (Number.isFinite(scale) && scale >= .0001 && scale <= 3) toDart('zoom', {scale:scale});
   };
   global.Bridge = Bridge;
   // Dart tarafı bu adı çağırıyor; adı değiştirmek köprüyü kırar.

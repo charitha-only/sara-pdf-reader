@@ -66,6 +66,7 @@
         return;
       }
       const scale = Bridge.fitScale(viewMode, width, height, available, Math.max(1, innerHeight - 32));
+      if (slide === slides[0]) Bridge.reportScale(scale);
       slide.style.transformOrigin = 'top left';
       slide.style.transform = 'scale(' + scale + ')';
       // Ölçek düzen kutusunu küçültmüyor; kalan boşluğu negatif kenar

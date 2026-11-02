@@ -45,6 +45,8 @@ class ReadingStateStore {
             'actual',
             'width',
             'page',
+            '0.1',
+            '0.25',
             '0.5',
             '0.75',
             '1.25',

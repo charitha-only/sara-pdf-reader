@@ -254,6 +254,8 @@ class _DocumentViewState extends State<DocumentView> {
 
       case 'viewport':
         _controller.reportViewport((message.payload['fraction'] as num?)?.toDouble() ?? 0, (message.payload['horizontal'] as num?)?.toDouble() ?? 0);
+      case 'zoom':
+        _controller.reportZoom((message.payload['scale'] as num?)?.toDouble() ?? double.nan);
       case 'searchIndex':
         _controller.reportSearchIndex((message.payload['index'] as int?) ?? -1);
       case 'searchResult':

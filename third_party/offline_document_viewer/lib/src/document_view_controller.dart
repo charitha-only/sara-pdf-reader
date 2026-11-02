@@ -28,6 +28,20 @@ class DocumentViewController extends ChangeNotifier {
   int _position = 0;
   double scrollFraction = 0;
   double horizontalOffset = 0;
+  double _zoomScale = 1;
+
+  /// Effective CSS scale reported by the renderer, including fit modes.
+  double get zoomScale => _zoomScale;
+
+  /// @nodoc
+  @internal
+  void reportZoom(double scale) {
+    if (!scale.isFinite || scale < .0001 || scale > 3 || scale == _zoomScale) {
+      return;
+    }
+    _zoomScale = scale;
+    notifyListeners();
+  }
   int searchIndex = -1;
   Future<void> Function(String, Map<String, Object?>)? _commandHandler;
   int _lastSearchHits = 0;

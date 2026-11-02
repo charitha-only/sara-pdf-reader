@@ -1,3 +1,4 @@
+import 'office_zoom.dart';
 import 'reader_display.dart';
 
 import 'dart:async';
@@ -24,7 +25,8 @@ class _OfficeViewerState extends State<OfficeViewer> {
   Timer? saveTimer;
   int generation = 0;
   bool cancelled = false, restored = false;
-  String mode = 'actual', query = '';
+  String mode = 'width', query = '';
+  bool changingScale = false;
   @override
   void initState() {
     super.initState();
@@ -63,6 +65,8 @@ class _OfficeViewerState extends State<OfficeViewer> {
       'page',
       'width',
       'actual',
+      '0.1',
+      '0.25',
       '0.5',
       '0.75',
       '1.25',
@@ -70,7 +74,7 @@ class _OfficeViewerState extends State<OfficeViewer> {
       '2',
       '3',
     };
-    mode = modes.contains(saved['mode']) ? saved['mode'] as String : 'actual';
+    mode = modes.contains(saved['mode']) ? saved['mode'] as String : 'width';
     await controller.setViewMode(mode);
     final unit = ((saved['unit'] as num?)?.toInt() ?? 0).clamp(
       0,
@@ -214,7 +218,8 @@ class _OfficeViewerState extends State<OfficeViewer> {
     ),
   );
   Future<void> chooseScale(String value) async {
-    if (controller.status != DocumentViewStatus.ready) return;
+    if (controller.status != DocumentViewStatus.ready || changingScale) return;
+    setState(() => changingScale = true);
     try {
       await controller.setViewMode(value);
       if (!mounted) return;
@@ -222,15 +227,18 @@ class _OfficeViewerState extends State<OfficeViewer> {
       save();
     } catch (error) {
       message('Could not change zoom: $error');
+    } finally {
+      if (mounted) setState(() => changingScale = false);
     }
   }
 
+  double get effectiveScale =>
+      mode == 'actual' ? 1 : double.tryParse(mode) ?? controller.zoomScale;
   void zoomStep(int step) {
-    const levels = ['0.5', '0.75', 'actual', '1.25', '1.5', '2', '3'];
-    final index = levels.indexOf(mode);
-    chooseScale(
-      levels[((index < 0 ? 2 : index) + step).clamp(0, levels.length - 1)],
-    );
+    final next = nextOfficeZoom(effectiveScale, step);
+    if (next != null) {
+      chooseScale(next);
+    }
   }
 
   @override
@@ -263,6 +271,8 @@ class _OfficeViewerState extends State<OfficeViewer> {
             PopupMenuItem(value: 'width', child: Text('Fit width')),
             PopupMenuItem(value: 'page', child: Text('Fit page / overview')),
             PopupMenuItem(value: 'actual', child: Text('Original size (100%)')),
+            PopupMenuItem(value: '0.1', child: Text('10%')),
+            PopupMenuItem(value: '0.25', child: Text('25%')),
             PopupMenuItem(value: '0.5', child: Text('50%')),
             PopupMenuItem(value: '0.75', child: Text('75%')),
             PopupMenuItem(value: '1.25', child: Text('125%')),
@@ -284,28 +294,35 @@ class _OfficeViewerState extends State<OfficeViewer> {
         ListenableBuilder(
           listenable: controller,
           builder: (context, _) {
-            final ready = controller.status == DocumentViewStatus.ready;
+            final ready =
+                controller.status == DocumentViewStatus.ready &&
+                restored &&
+                !changingScale;
             return Wrap(
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 IconButton(
                   tooltip: 'Zoom out',
-                  onPressed: ready ? () => zoomStep(-1) : null,
+                  onPressed: ready && nextOfficeZoom(effectiveScale, -1) != null
+                      ? () => zoomStep(-1)
+                      : null,
                   icon: const Icon(Icons.zoom_out),
                 ),
                 Text(
                   mode == 'page'
-                      ? 'Fit page'
+                      ? 'Fit page (${(controller.zoomScale * 100).round()}%)'
                       : mode == 'width'
-                      ? 'Fit width'
+                      ? 'Fit width (${(controller.zoomScale * 100).round()}%)'
                       : mode == 'actual'
                       ? '100%'
                       : '${((double.tryParse(mode) ?? 1) * 100).round()}%',
                 ),
                 IconButton(
                   tooltip: 'Zoom in',
-                  onPressed: ready ? () => zoomStep(1) : null,
+                  onPressed: ready && nextOfficeZoom(effectiveScale, 1) != null
+                      ? () => zoomStep(1)
+                      : null,
                   icon: const Icon(Icons.zoom_in),
                 ),
                 TextButton(
